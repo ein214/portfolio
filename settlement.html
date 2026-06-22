@@ -164,9 +164,12 @@
         <div class="node async"><div class="nt">SQS FIFO</div><div class="ns">groupId=순서<br>dedupId=멱등</div></div>
         <div class="arrow"><div class="al">비동기 consume</div><div class="ab">→</div></div>
         <div class="node ext"><div class="nt">정산 서버</div><div class="ns">익일 PG수수료 반영<br>→ Settlement 생성</div></div>
+        <div class="arrow"><div class="al">settlement.processed.* 이벤트</div><div class="ab">→</div></div>
+        <div class="node async"><div class="nt">Flat 조회 DB</div><div class="ns">ReadDBUpdater 평탄화<br>CQRS · 별도 DB</div></div>
       </div>
       <p style="text-align:center;color:var(--dim);font-size:.8rem;margin:20px 0 0">
         핵심: 이 백엔드는 <b style="color:var(--mut)">최종 settlement을 직접 만들지 않는다.</b> 아는 만큼만 prep에 커밋하고, 익일 도착하는 PG 수수료는 별도 정산 서버가 SQS로 받아 채운다 — <b style="color:var(--mut)">결제(동기)와 정산(비동기)의 시점 분리.</b>
+        정산 서버는 Settlement를 만든 뒤 <span class="mono">settlement.processed.*</span> 이벤트로 조회용 Flat 테이블을 비동기 평탄화해, <b style="color:var(--mut)">쓰기와 조회를 물리적으로 분리한다(CQRS).</b>
       </p>
     </div>
   </div>
