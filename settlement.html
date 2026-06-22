@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>정산 시스템 설계·고도화 포트폴리오</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2330; --line:#2d3644;
+    --txt:#e6edf3; --mut:#9aa7b5; --dim:#6e7b8a;
+    --accent:#58a6ff; --green:#3fb950; --amber:#d29922; --red:#f85149; --purple:#bc8cff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+    line-height:1.65;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:980px;margin:0 auto;padding:48px 24px 80px}
+  code,.mono{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:.86em}
+  .mono-pill{background:#21262d;color:var(--accent);padding:1px 7px;border-radius:5px;border:1px solid var(--line);white-space:nowrap}
+
+  header{border-bottom:1px solid var(--line);padding-bottom:28px;margin-bottom:8px}
+  .eyebrow{color:var(--accent);font-weight:600;font-size:.8rem;letter-spacing:.12em;text-transform:uppercase}
+  h1{font-size:2.1rem;line-height:1.25;margin:.4em 0 .3em;letter-spacing:-.01em}
+  .lead{color:var(--mut);font-size:1.06rem;max-width:780px}
+  .lead b{color:var(--txt);font-weight:600}
+  .meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+  .chip{background:var(--panel);border:1px solid var(--line);border-radius:999px;
+    padding:6px 14px;font-size:.82rem;color:var(--mut)}
+  .chip b{color:var(--txt)}
+
+  h2{font-size:1.05rem;letter-spacing:.04em;text-transform:uppercase;color:var(--dim);
+    margin:54px 0 18px;font-weight:700}
+
+  /* timeline */
+  .tl{position:relative;margin-left:8px;padding-left:28px;border-left:2px solid var(--line)}
+  .tl-item{position:relative;padding:0 0 22px}
+  .tl-item::before{content:"";position:absolute;left:-35px;top:5px;width:11px;height:11px;
+    border-radius:50%;background:var(--bg);border:2px solid var(--accent)}
+  .tl-item.amber::before{border-color:var(--amber)}
+  .tl-item.green::before{border-color:var(--green)}
+  .tl-item.purple::before{border-color:var(--purple)}
+  .tl-date{font-size:.78rem;color:var(--dim);font-weight:600;letter-spacing:.03em}
+  .tl-title{font-weight:600;margin:1px 0 2px}
+  .tl-desc{color:var(--mut);font-size:.92rem}
+
+  /* phase cards */
+  .phase{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:26px 28px;margin-bottom:22px;position:relative;overflow:hidden}
+  .phase::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--accent)}
+  .phase.p1::before{background:var(--purple)} .phase.p2::before{background:var(--green)}
+  .phase.p3::before{background:var(--amber)}
+  .ph-num{font-size:.78rem;font-weight:700;letter-spacing:.1em;color:var(--dim);text-transform:uppercase}
+  .ph-title{font-size:1.3rem;font-weight:700;margin:3px 0 14px;letter-spacing:-.01em}
+  .block{margin:14px 0}
+  .block .lbl{font-size:.8rem;font-weight:700;letter-spacing:.04em;display:inline-flex;
+    align-items:center;gap:6px;margin-bottom:6px}
+  .lbl.prob{color:var(--red)} .lbl.act{color:var(--accent)} .lbl.res{color:var(--green)}
+  ul{margin:6px 0;padding-left:20px}
+  li{margin:5px 0;color:var(--mut)}
+  li b{color:var(--txt);font-weight:600}
+  .tags{display:flex;flex-wrap:wrap;gap:7px;margin-top:16px;padding-top:14px;border-top:1px dashed var(--line)}
+  .tag{font-size:.76rem;background:var(--panel2);border:1px solid var(--line);color:var(--mut);
+    padding:3px 10px;border-radius:6px}
+
+  /* architecture diagram */
+  .arch{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px;overflow-x:auto}
+  .arch-inner{min-width:680px;padding:22px}
+  .flow{display:flex;align-items:stretch;gap:0;justify-content:center}
+  .node{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;
+    min-width:120px;text-align:center}
+  .node .nt{font-weight:700;font-size:.9rem}
+  .node .ns{font-size:.74rem;color:var(--dim);margin-top:3px}
+  .node.sync{border-color:#1f6feb55;background:#0d2a4a33}
+  .node.async{border-color:#3fb95055;background:#0f3a1a33}
+  .node.ext{border-color:#bc8cff55;background:#2a1a4a33}
+  .arrow{display:flex;flex-direction:column;justify-content:center;align-items:center;color:var(--dim);
+    padding:0 6px;min-width:64px}
+  .arrow .al{font-size:.68rem;white-space:nowrap;margin-bottom:2px;color:var(--dim)}
+  .arrow .ab{font-size:1.2rem;line-height:1}
+  .stack{display:flex;flex-direction:column;gap:8px}
+
+  /* stat grid */
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+  .stat .num{font-size:1.8rem;font-weight:800;letter-spacing:-.02em}
+  .stat.a .num{color:var(--accent)} .stat.g .num{color:var(--green)}
+  .stat.p .num{color:var(--purple)} .stat.m .num{color:var(--amber)}
+  .stat .cap{font-size:.82rem;color:var(--mut);margin-top:3px}
+
+  /* highlight list */
+  .hi{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px 26px 18px}
+  .hi li{margin:11px 0;color:var(--mut)}
+  .hi li b{color:var(--txt)}
+
+  table{width:100%;border-collapse:collapse;font-size:.86rem;margin-top:4px}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--dim);font-size:.76rem;text-transform:uppercase;letter-spacing:.05em}
+  td.c1{color:var(--txt);font-weight:600;white-space:nowrap}
+  .ref{color:var(--dim);font-size:.85rem}
+
+  footer{margin-top:50px;padding-top:20px;border-top:1px solid var(--line);
+    color:var(--dim);font-size:.82rem}
+  @media(max-width:560px){h1{font-size:1.6rem}.wrap{padding:32px 16px 60px}.phase{padding:20px}}
+</style>
+</head>
+<body>
+<div style="max-width:980px;margin:0 auto;padding:18px 24px 0"><a href="index.html" style="color:#58a6ff;text-decoration:none;font-size:.86rem">← 메인 포트폴리오</a></div>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Backend Portfolio · Settlement Domain</div>
+    <h1>정산 시스템 설계·고도화</h1>
+    <p class="lead">결제 시점에 단일 테이블로 정산금을 확정하던 레거시(<span class="mono mono-pill">payout</span>)를,
+      <b>결제 시점과 정산 시점을 분리한 2단계 파이프라인</b>(<span class="mono mono-pill">settlement_prep</span> → SQS → <span class="mono mono-pill">settlement</span>)으로 재설계하고,
+      <b>혼합결제 환불을 결제수단별로 정확히 역산하는 오케스트레이션</b>까지 구축.
+      나아가 정산을 받아 계산·평탄화하는 <b>정산 서버</b>(전략 엔진 · CQRS 조회 · self-healing)까지, 분산 정산 파이프라인의 양 끝을 직접 설계했다.</p>
+    <div class="meta">
+      <span class="chip"><b>기간</b> 2024.02 – 운영 중 (~2년+)</span>
+      <span class="chip"><b>역할</b> 정산 도메인 단독 설계·구현·운영</span>
+      <span class="chip"><b>스택</b> NestJS · PostgreSQL · AWS SQS(FIFO) · TypeORM · Multi-DB</span>
+    </div>
+    <p class="lead" style="margin-top:18px;font-size:.95rem">이 문서는 채용 담당자용 요약이 아니라 <b>시니어·면접관용 기술 심화 문서</b>다. 메인 포트폴리오에서 생략한 설계 배경과 의사결정 근거를 담는다. 회사 식별 정보·사업 지표는 제거했고, 측정값만 단정하고 이론값은 "(이론)"으로 표기했다.</p>
+  </header>
+
+  <h2>진화 타임라인</h2>
+  <div class="tl">
+    <div class="tl-item amber">
+      <div class="tl-date">2024.02 · Phase 0</div>
+      <div class="tl-title">payout 도입</div>
+      <div class="tl-desc">결제 확정 시점에 단일 테이블로 <code>total = 상품금액 + 배송비 − 수수료</code> 정산 예정액 확정</div>
+    </div>
+    <div class="tl-item amber">
+      <div class="tl-date">2024.04 – 2025 · 한계 노출</div>
+      <div class="tl-title">멤버십·구독·다건·환불 증가 → 단일 금액 모델이 버그 온상화</div>
+      <div class="tl-desc">수수료 계산 주석 처리, 정기결제 회차 누락, <code>payouts[0]</code> 단일 요소 가정 등 구조적 결함</div>
+    </div>
+    <div class="tl-item purple">
+      <div class="tl-date">2025.10 · Phase 1</div>
+      <div class="tl-title">settlement_prep 재설계</div>
+      <div class="tl-desc">결제수단별 금액 분해 + 전략 패턴 + 순수 도메인 객체 도입 / 레거시 정산 엔진 ~1,900줄 폐기·재작성</div>
+    </div>
+    <div class="tl-item green">
+      <div class="tl-date">2025.10 – 11 · Phase 2</div>
+      <div class="tl-title">AWS SQS(FIFO) 비동기 파이프라인</div>
+      <div class="tl-desc">정산 계산을 결제 임계경로에서 분리, groupId·dedup 분리 설계로 순서·멱등 보장</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">2026.04 – 06 · Phase 3</div>
+      <div class="tl-title">order_payment + 환불 오케스트레이션</div>
+      <div class="tl-desc">결제수단별 원장 정규화 + PostgreSQL advisory lock + 커밋 후 SQS 발행</div>
+    </div>
+  </div>
+
+  <h2>아키텍처 — 2단계 비동기 정산 파이프라인</h2>
+  <div class="arch">
+    <div class="arch-inner">
+      <div class="flow">
+        <div class="stack">
+          <div class="node sync"><div class="nt">결제 완료</div><div class="ns">OrderPayment</div></div>
+          <div class="node sync"><div class="nt">멤버십 사용</div><div class="ns">UseLog</div></div>
+        </div>
+        <div class="arrow"><div class="al">동기 · 즉시응답</div><div class="ab">→</div></div>
+        <div class="node sync"><div class="nt">SettlementPrep</div><div class="ns">결제수단별 금액 분해<br>(cash/point/pg)</div></div>
+        <div class="arrow"><div class="al">DB commit 후</div><div class="ab">→</div></div>
+        <div class="node async"><div class="nt">SQS FIFO</div><div class="ns">groupId=순서<br>dedupId=멱등</div></div>
+        <div class="arrow"><div class="al">비동기 consume</div><div class="ab">→</div></div>
+        <div class="node ext"><div class="nt">정산 서버</div><div class="ns">익일 PG수수료 반영<br>→ Settlement 생성</div></div>
+      </div>
+      <p style="text-align:center;color:var(--dim);font-size:.8rem;margin:20px 0 0">
+        핵심: 이 백엔드는 <b style="color:var(--mut)">최종 settlement을 직접 만들지 않는다.</b> 아는 만큼만 prep에 커밋하고, 익일 도착하는 PG 수수료는 별도 정산 서버가 SQS로 받아 채운다 — <b style="color:var(--mut)">결제(동기)와 정산(비동기)의 시점 분리.</b>
+      </p>
+    </div>
+  </div>
+
+  <h2>핵심 프로젝트</h2>
+
+  <div class="phase p1">
+    <div class="ph-num">Phase 1</div>
+    <div class="ph-title">죽은 도메인 <span class="mono">payout</span> 진단 → <span class="mono">settlement_prep</span> 재설계</div>
+    <div class="block"><span class="lbl prob">● 문제</span>
+      <ul>
+        <li><b>단일 금액 모델 vs 혼합결제 현실</b> — 결제수단별 금액 분해 개념이 없어, 혼합결제·부분환불이 들어오자 수수료 계산을 주석 처리하고 jsonb로 도피</li>
+        <li><b>결제 시점 ≠ 정산 시점</b> — 정기결제 N회차에서 미리 생성된 payout이 회차 계산을 깨뜨림 → 시간 컬럼 트릭·휴리스틱으로 땜질</li>
+        <li><b><span class="mono">payouts[0]</span> 단일 요소 가정</b> — 0개·복수일 때 정산 누락/예외 → 방어코드 반복 누적</li>
+      </ul>
+    </div>
+    <div class="block"><span class="lbl act">● 행동</span>
+      <ul>
+        <li><b>결제수단별 금액을 1급 컬럼으로 분리</b> — <span class="mono">cashAmount / pointAmount / pgAmount / manualAmount / paymentFee</span></li>
+        <li><b>prep(준비) / settlement(최종) 2단계 분리</b> — 결제 직후 아는 만큼만 prep에 커밋, 익일 정보는 정산 서버가 채움</li>
+        <li><b>순수 도메인 객체 <span class="mono">SettlementPrepBuilder</span> 추출</b> — 포인트→캐시→PG 순차 비례 배분 + 마지막 항목에 반올림 잔차를 몰아 합계 정확히 일치 (회계 정합)</li>
+        <li><b>전략 + 팩토리 패턴</b> — Ticket(건당) vs Pass(정액 구독, 500건 청킹) 정산 분기를 추상화 → 유형 추가 시 서비스 수정 없이 확장(OCP)</li>
+      </ul>
+    </div>
+    <div class="block"><span class="lbl res">● 결과</span>
+      <ul>
+        <li>절차적 1개 메서드(169줄) → <b>전략별 분리된 테스트 가능 구조</b>, 레거시 정산 엔진 <b>~1,900줄 폐기·재작성</b></li>
+        <li>8종 주문유형(EBOOK/ALADIN/POD/CASH/PACKAGE/SEPARATE/UPGRADE/멤버십)을 <b>단일 출력 포맷으로 수렴</b></li>
+      </ul>
+    </div>
+    <div class="tags"><span class="tag">도메인 모델링</span><span class="tag">전략/팩토리 패턴</span><span class="tag">순수 도메인 객체</span><span class="tag">레거시 마이그레이션</span><span class="tag">관심사 분리</span></div>
+  </div>
+
+  <div class="phase p2">
+    <div class="ph-num">Phase 2</div>
+    <div class="ph-title">동기 정산 → AWS SQS(FIFO) 비동기 파이프라인</div>
+    <div class="block"><span class="lbl prob">● 문제</span>
+      <ul>
+        <li>정산 계산(비율 조회·원저작자·분할정산·세금 계산)이 <b>결제 요청 임계경로에서 동기 수행</b> → 응답 지연</li>
+        <li>정산 실패가 <b>주문 실패로 전파</b>, 멤버십 대량 사용 시 부하 집중</li>
+      </ul>
+    </div>
+    <div class="block"><span class="lbl act">● 행동</span>
+      <ul>
+        <li><b>무거운 계산을 SQS 뒤로 이동</b> — Service 의존성 5개 → 1개, 주문은 prep만 저장하고 즉시 응답</li>
+        <li><b>FIFO 두 키 분리 설계</b> — <span class="mono">groupId</span>(순서: 주문 직렬·청크 병렬) / <span class="mono">deduplicationId</span>(멱등: 5분 윈도우 중복 차단). <span class="ref">초기 혼동 → 3개 커밋에 걸쳐 분리·정제한 의사결정 이력</span></li>
+        <li><b>멱등성 2중 방어선</b> — FIFO dedup(단기) + <span class="mono">SqsMessageLog</span>(영구 감사, 메시지 1건 → 비즈니스 엔티티 1:N 전개로 역추적)</li>
+        <li><b>재시도 3단 폴백</b> — SDK 지수 백오프(상한 20s) → Slack 에스컬레이션 → 배치/수동 재처리</li>
+        <li><b>Producer 분리</b> — 일반 정산(고빈도) vs 환불/관리자(저빈도)를 별도 큐로 트래픽·멱등 전략 차등화</li>
+      </ul>
+    </div>
+    <div class="block"><span class="lbl res">● 결과</span>
+      <ul>
+        <li>정산 계산이 결제 응답시간에서 제거, 정산 장애가 주문에 전파되지 않도록 <b>격리</b></li>
+        <li>순서 필요 단위(주문)는 직렬화 / 처리량 필요 단위(청크)는 병렬화 — <b>trade-off를 groupId 입도로 명시</b></li>
+      </ul>
+    </div>
+    <div class="tags"><span class="tag">분산 시스템</span><span class="tag">SQS FIFO</span><span class="tag">멱등성</span><span class="tag">exactly-once 근사</span><span class="tag">부하 분산</span><span class="tag">장애 격리</span></div>
+  </div>
+
+  <div class="phase p3">
+    <div class="ph-num">Phase 3</div>
+    <div class="ph-title"><span class="mono">order_payment</span> 도입 + 환불 오케스트레이션</div>
+    <div class="block"><span class="lbl prob">● 문제</span>
+      <ul>
+        <li>한 주문을 <b>포인트+캐시+PG 혼합결제</b> 가능하나, 기존 order는 총액만 표현 → 부분환불 시 무엇을 얼마나 되돌릴지 계산 근거 없음</li>
+        <li>동시 환불 요청(더블클릭·재시도) 시 <b>PG 이중취소·자산 이중복구·정산 중복 생성</b> 위험</li>
+      </ul>
+    </div>
+    <div class="block"><span class="lbl act">● 행동</span>
+      <ul>
+        <li><b>order_payment — 결제수단별 원장 정규화</b> — 환불은 음수가 아니라 status만 바꾼 mirror row + <span class="mono">parent_payment_id</span>(self-FK)</li>
+        <li><b>2층 auto distribution</b> — ① 주문레벨 포인트→캐시→PG 소진(내부자산 우선) ② 아이템레벨 비례+잔차 흡수로 구매·환불 prep 합계 일치</li>
+        <li><b>PostgreSQL advisory lock</b> — <span class="mono">pg_advisory_xact_lock('refund:'+orderId)</span>로 다중 테이블 환불을 단일 키로 직렬화. 행 락보다 단순·견고, 트랜잭션 스코프로 자동 해제</li>
+        <li><b>커밋 후 SQS 발행</b> — <span class="mono">runOnTransactionCommit</span>으로 발행을 커밋 이후로 지연 → consumer가 미커밋 prep을 못 읽는 read-after-write race 차단</li>
+        <li><b>보상 불가 지점 명시</b> — PG 취소 실패는 <span class="mono">[REFUND_PG_CANCEL_FAILED]</span> CRITICAL 로그로 별도 관리</li>
+      </ul>
+    </div>
+    <div class="block"><span class="lbl res">● 결과</span>
+      <ul>
+        <li>혼합결제의 부분/전액·다회 환불을 결제수단별로 정확히 역산, 누적 환불의 원결제 초과 방지</li>
+        <li>동시 환불 직렬화로 PG 이중취소·자산 이중복구 <b>원천 차단</b></li>
+      </ul>
+    </div>
+    <div class="tags"><span class="tag">동시성 제어</span><span class="tag">advisory lock</span><span class="tag">분산 트랜잭션</span><span class="tag">보상 트랜잭션</span><span class="tag">결제수단별 원장</span><span class="tag">race condition 해결</span></div>
+  </div>
+
+  <h2>정산 서버 — 정산 엔진 · 조회 최적화</h2>
+  <p style="color:var(--mut);font-size:.95rem;margin:-6px 0 18px">메인 백엔드가 보낸 <span class="mono mono-pill">settlement_prep</span>을 받아 최종 정산을 계산하고, 조회·리포팅을 읽기 전용 모델로 분리한 정산 전용 서비스. 코드 지표는 리포지토리 실측값 — 프로덕션 약 25.3k LOC(208 TS 파일), 테스트 비중 약 37%(14.6k LOC · 29 spec), 정산 전략 9종, 엔티티/모듈 43/16.</p>
+
+  <div class="phase p2">
+    <div class="ph-num">Engine</div>
+    <div class="ph-title">9개 정산 모델을 Strategy + Template Method로 통합</div>
+    <div class="block"><span class="lbl act">● 설계</span>
+      <ul>
+        <li>단건·이용권·월정액·사용량 구독·전문가(영/국)·PG수수료 동기화 등 모델마다 데이터 출처와 분배 수식이 다르지만, <span class="mono">execute() → getTargets() → processTargets() → buildResult()</span> 골격은 동일</li>
+        <li>공통 골격을 <span class="mono">BaseSettlementStrategy</span>의 템플릿 메서드로 고정하고, 각 모델은 차이나는 단계만 구현 → 새 수익 모델을 기존 전략을 건드리지 않고 <b>클래스 하나 추가로 확장(OCP)</b></li>
+        <li>계산은 3계층 파이프라인 — 기본 분배 → 정산 타입별(이용권 COUNT/AMOUNT, 전문가 3단계 단가) → 저자/출판사 계약 비율 → 최소금액 보정</li>
+      </ul>
+    </div>
+    <div class="block"><span class="lbl res">● 효과</span>
+      <ul><li>switch 분기 폭발을 구조로 제거. 전략별로 분리·테스트 가능한 구조</li></ul>
+    </div>
+    <div class="tags"><span class="tag">Strategy/Template Method</span><span class="tag">OCP</span><span class="tag">정산 데이터 모델링</span></div>
+  </div>
+
+  <div class="phase">
+    <div class="ph-num">Correctness</div>
+    <div class="ph-title">금융 정밀성 — 정수 연산과 불변성·감사 추적</div>
+    <div class="block"><span class="lbl act">● 설계</span>
+      <ul>
+        <li>부가세 <span class="mono">round(price / 11)</span>, 분배가 <span class="mono">round(price / N)</span> 정수 연산으로 계산하고 잔여 손실을 통제</li>
+        <li>핵심 원칙은 <b>이미 계산된 정산 금액은 절대 수정하지 않는다</b> — 변경이 필요하면 기존 건을 취소(soft-delete)하고 새 건으로 재정산</li>
+      </ul>
+    </div>
+    <div class="block"><span class="lbl res">● 근거</span>
+      <ul><li>회계·세무·저작권 정산은 "언제·무엇이·왜 바뀌었는가"가 데이터에 영원히 남아야 분쟁과 마감 정정에 대응할 수 있고, in-place update는 그 과거를 지운다</li></ul>
+    </div>
+    <div class="tags"><span class="tag">정수 연산 분배</span><span class="tag">불변성</span><span class="tag">감사 추적(audit trail)</span></div>
+  </div>
+
+  <div class="phase p1">
+    <div class="ph-num">CQRS</div>
+    <div class="ph-title">멀티 DB 분리와 이벤트 기반 비정규화</div>
+    <div class="block"><span class="lbl act">● 설계</span>
+      <ul>
+        <li>트랜잭션용 정규화 DB(master/slave 복제)와 조회·리포팅용 비정규화 Flat DB를 <b>물리적으로 분리</b></li>
+        <li>정산 전략이 처리를 끝내면 <span class="mono">settlement.processed.*</span> 이벤트를 발행하고, <span class="mono">ReadDBUpdater</span>가 복잡한 JOIN 결과를 Flat 테이블로 평탄화</li>
+        <li>평탄화 실패가 정산 본처리를 망치지 않도록 개별 실패는 <span class="mono">ERR_70</span> 로그만 남기고 진행 — <b>장애 격리</b></li>
+      </ul>
+    </div>
+    <div class="block"><span class="lbl res">● 효과</span>
+      <ul><li>대시보드·엑셀의 무거운 조회가 정산 쓰기 트랜잭션을 방해하지 않음. 천만 건대 조회를 다중 조인 없이 단일 테이블 스캔으로 처리 (메인 포트폴리오 ② 조회 개선과 이어지는 구조)</li></ul>
+    </div>
+    <div class="tags"><span class="tag">CQRS</span><span class="tag">읽기/쓰기 분리</span><span class="tag">이벤트 기반 비정규화</span><span class="tag">장애 격리</span></div>
+  </div>
+
+  <div class="phase p3">
+    <div class="ph-num">Self-healing</div>
+    <div class="ph-title">자가 치유 에러 시스템 — 검증 3단계 · 25 에러코드 · 5 복구 액션</div>
+    <div class="block"><span class="lbl act">● 설계</span>
+      <ul>
+        <li>정산 오류를 "나면 사람이 본다"가 아니라 <b>분류 → 추적 → 자동 복구</b> 파이프라인으로 전환</li>
+        <li>생명주기별 검증 3단계 — Creation(입력·출처 ERR_03/04) → Strategy(금액 정합 ERR_12/14) → Scheduler(합계·중복 ERR_13/90)</li>
+        <li>25종·5카테고리 에러코드, 5개 복구 액션 — CONTRACT_REMAP(계약변경 재계산) · REGENERATE(완전 재생성) · CREATE_MISSING(누락 보충) · FULL_AUDIT(월별 9종 병렬 점검) · REFUND/RECALL(관리자 액션)</li>
+        <li>ErrorLog(감지) + ResolutionLog(해결 이력) 2계층 로깅으로 누가·어떻게·무엇을 고쳤는지 영구 기록</li>
+      </ul>
+    </div>
+    <div class="tags"><span class="tag">self-healing</span><span class="tag">에러코드 체계</span><span class="tag">2계층 로깅</span><span class="tag">운영 안정화</span></div>
+  </div>
+
+  <div class="phase p2">
+    <div class="ph-num">Idempotency</div>
+    <div class="ph-title">멱등성과 대용량 — 재시도가 데이터를 망치지 않게</div>
+    <div class="block"><span class="lbl act">● 설계</span>
+      <ul>
+        <li><b>생성 중복 차단</b> — prepId/payoutId 기준 기존 정산 조회 후 있으면 그대로 반환</li>
+        <li><b>UPSERT 에러로그</b> — <span class="mono">orUpdate</span> + <span class="mono">indexPredicate('resolved_at IS NULL')</span>로 같은 오류 N회 감지돼도 행 1개, 해결된 건은 재오픈 안 됨</li>
+        <li><b>soft-delete 재생성</b> — 재생성 시 원본 <span class="mono">createdAt</span> 유지, 삭제 건은 중복검사에서 자동 제외</li>
+        <li><b>스트리밍 엑셀</b> — <span class="mono">pg-query-stream</span> → 백프레셔 → ExcelJS WorkbookWriter → S3, 시트당 100만 행 자동 분할로 수백만 행을 상수 메모리로 처리</li>
+      </ul>
+    </div>
+    <div class="tags"><span class="tag">멱등성</span><span class="tag">UPSERT 부분 인덱스</span><span class="tag">soft-delete</span><span class="tag">스트리밍</span></div>
+  </div>
+
+  <h2>핵심 결과</h2>
+  <div class="hi">
+    <ul>
+      <li><b>결제 응답 경로에서 정산 계산 제거</b> — 무거운 비율·분배·세금 계산을 SQS 뒤로 옮겨, 주문 트랜잭션은 prep만 저장하고 즉시 응답</li>
+      <li><b>정산 장애의 주문 전파 차단</b> — 정산 실패가 결제·주문 실패로 번지지 않도록 격리</li>
+      <li><b>혼합결제 환불의 정확한 역산</b> — 포인트·캐시·PG 결제수단별 원장으로 부분/전액·다회 환불을 정확히 되돌리고, 누적 환불의 원결제 초과를 방지</li>
+      <li><b>중복 정산·이중 취소 차단</b> — FIFO 멱등 + advisory lock 직렬화로 재시도·동시 요청에도 "정확히 한 건"</li>
+      <li><b>죽은 레거시의 구조적 재작성</b> — 단일 금액 모델의 한계를 진단하고 정산 엔진을 전략별로 분리·테스트 가능한 구조로 재설계</li>
+    </ul>
+  </div>
+
+  <footer>
+    NestJS / PostgreSQL / AWS SQS(FIFO) · 정산 도메인 설계·고도화 (2024–2026)
+  </footer>
+</div>
+</body>
+</html>

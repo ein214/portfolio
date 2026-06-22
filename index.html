@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>고은지 (Elin) — 백엔드 엔지니어 포트폴리오</title>
+<style>
+  :root{
+    --ink:#11161d; --ink2:#3a4654; --mut:#6b7785; --line:#e6e9ee;
+    --bg:#fbfcfd; --card:#ffffff; --accent:#1f6feb; --accent2:#0b3a82;
+    --ok:#108548; --warn:#9a6700; --chip:#eef2f7; --code:#0f172a;
+    --shadow:0 1px 2px rgba(16,24,40,.04),0 8px 24px rgba(16,24,40,.06);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Apple SD Gothic Neo","Pretendard",Roboto,"Noto Sans KR",sans-serif;
+    line-height:1.65;-webkit-font-smoothing:antialiased;font-size:16px}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 22px 96px}
+  a{color:var(--accent);text-decoration:none}
+  code{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:.86em;
+    background:var(--chip);padding:.1em .42em;border-radius:5px;color:var(--code)}
+
+  /* hero */
+  header.hero{padding:64px 0 40px;border-bottom:1px solid var(--line);margin-bottom:8px}
+  .eyebrow{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:700}
+  h1{font-size:clamp(30px,5vw,46px);line-height:1.12;margin:14px 0 10px;letter-spacing:-.02em}
+  .lead{font-size:clamp(17px,2.3vw,20px);color:var(--ink2);max-width:760px;margin:0}
+  .role{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+  .pill{background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-size:13.5px;color:var(--ink2);box-shadow:var(--shadow)}
+  .pill b{color:var(--ink)}
+
+  /* metrics */
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:36px 0 8px}
+  .metric{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 16px;box-shadow:var(--shadow)}
+  .metric .n{font-size:30px;font-weight:800;letter-spacing:-.02em;line-height:1}
+  .metric .l{font-size:12.5px;color:var(--mut);margin-top:7px}
+  .metric .s{font-size:11.5px;color:#9aa4b0;margin-top:3px}
+
+  section{margin-top:54px;scroll-margin-top:20px}
+  h2{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent2);font-weight:800;margin:0 0 4px}
+  .h2sub{font-size:24px;font-weight:750;letter-spacing:-.01em;margin:0 0 22px;color:var(--ink)}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px 24px;box-shadow:var(--shadow);margin-bottom:16px}
+  .card h3{margin:0 0 4px;font-size:19px;letter-spacing:-.01em}
+  .card .tag{font-size:12px;color:var(--accent);font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .kv{margin:14px 0 0;border-top:1px dashed var(--line);padding-top:14px}
+  .kv dt{font-size:12.5px;color:var(--mut);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+  .kv dd{margin:3px 0 12px;color:var(--ink2)}
+  .kv dd:last-child{margin-bottom:0}
+  .kv dd b{color:var(--ink)}
+  .fileref{font-size:12.5px;color:var(--mut);margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+  .fileref code{background:#f4f6f9}
+
+  ul.clean{margin:10px 0 0;padding-left:0;list-style:none}
+  ul.clean li{position:relative;padding-left:22px;margin:7px 0;color:var(--ink2)}
+  ul.clean li::before{content:"";position:absolute;left:4px;top:11px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+  ul.clean li b{color:var(--ink)}
+
+  /* competency */
+  .comp{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .comp .c{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;box-shadow:var(--shadow)}
+  .comp .c h3{margin:0 0 6px;font-size:16px;letter-spacing:-.01em}
+  .comp .c p{margin:0;color:var(--ink2);font-size:14.5px}
+
+  /* case study */
+  .case .lead-prob{margin:0 0 2px;color:var(--ink2)}
+  .seq{counter-reset:step;margin:14px 0 0;padding-left:0;list-style:none}
+  .seq li{position:relative;padding-left:34px;margin:9px 0;color:var(--ink2)}
+  .seq li::before{counter-increment:step;content:counter(step);position:absolute;left:0;top:1px;
+    width:21px;height:21px;border-radius:50%;background:var(--chip);color:var(--accent2);
+    font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center}
+  .seq li b{color:var(--ink)}
+  .verdict{background:#f4f8ff;border:1px solid #d7e6ff;border-radius:12px;padding:13px 16px;margin-top:14px;color:#234;font-size:14.5px}
+  .verdict b{color:var(--accent2)}
+
+  /* stack */
+  .stack{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+  .stack .grp{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
+  .stack .grp .t{font-size:12px;color:var(--mut);font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-bottom:9px}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chips span{background:var(--chip);border-radius:7px;padding:5px 10px;font-size:13px;color:var(--ink2)}
+
+  .deep{background:linear-gradient(180deg,#0e1726,#0b1220);border-radius:16px;padding:22px 26px;color:#cdd8e6}
+  .deep h3{margin:0 0 6px;color:#fff;font-size:17px}
+  .deep p{margin:0;color:#9fb1c9;font-size:14.5px}
+  .deep a{color:#7db4ff;font-weight:600}
+
+  .note{background:#fffaf0;border:1px solid #f2e2bd;border-radius:14px;padding:16px 20px;color:#6b5618;font-size:14.5px}
+  .note b{color:#7a4d00}
+  .fill{background:#fff6e6;border-radius:5px;padding:.05em .4em;color:#9a6700;font-weight:600;border:1px dashed #e3c98a}
+
+  .small{font-size:13px;color:var(--mut)}
+  footer{margin-top:64px;padding-top:24px;border-top:1px solid var(--line);color:var(--mut);font-size:13px}
+
+  @media(max-width:760px){
+    .metrics{grid-template-columns:repeat(2,1fr)}
+    .grid2,.stack,.comp{grid-template-columns:1fr}
+    header.hero{padding:44px 0 30px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <div class="eyebrow">Backend Engineer · 14년차</div>
+  <h1>고은지 (Elin)</h1>
+  <p class="lead">Node.js·NestJS 기반 백엔드 14년차입니다. 정산·결제·라이선스처럼 데이터의 정확성이 곧 서비스 신뢰와 직결되는 영역을 주로 다뤄왔습니다. 복잡한 비즈니스 요구사항을 <b>구조화해 시스템으로 설계하고, 운영 가능한 상태까지 책임지는 것</b>을 일의 기준으로 삼습니다. 기능 구현보다 '왜 필요한가'를 먼저 묻고, 오래 지속될 구조를 만드는 데 가치를 둡니다.</p>
+  <div class="role">
+    <span class="pill">💼 <b>경력</b> 14년 2개월 · 현 백엔드 (2022.05~)</span>
+    <span class="pill">🎯 <b>주력</b> 정산/결제 도메인 · 대용량 아키텍처 · 장애 분석</span>
+    <span class="pill">🧭 <b>지향</b> 근본 원인 분석 · 운영 안정화</span>
+  </div>
+</header>
+
+<!-- WHO -->
+<section>
+  <h2>Profile</h2>
+  <div class="h2sub">어떤 개발자인가</div>
+  <div class="comp">
+    <div class="c">
+      <h3>정산·결제 도메인</h3>
+      <p>원 단위 정수 연산, 확정된 정산은 수정하지 않고 취소+재정산하는 불변성, 감사 추적을 1급 요구사항으로 둔 금융성 정산 시스템을 설계했습니다. 출판사·저자 다층 분배, 혼합결제 환불 역산 같은 난제를 데이터 모델 차원에서 풀었습니다.</p>
+    </div>
+    <div class="c">
+      <h3>대용량 · 아키텍처</h3>
+      <p>천만 건 규모로 성장한 정산 데이터의 조회 구조를 CQRS·비정규화 Flat Table로 재설계하고, 결제 임계경로에서 정산을 떼어낸 SQS 비동기 파이프라인을 설계했습니다. 읽기/쓰기 모델 분리와 멱등성 보장에 익숙합니다.</p>
+    </div>
+    <div class="c">
+      <h3>트러블슈팅 깊이</h3>
+      <p>heap·external은 정상인데 RSS만 오르는 누수, 처리 능력은 멀쩡한데 대기 시간만 치솟는 큐 병목처럼 표면 지표가 원인을 가리는 장애를, 가설을 세우고 실데이터로 하나씩 기각하며 근본 원인까지 좁혀갑니다.</p>
+    </div>
+    <div class="c">
+      <h3>운영과 안정화</h3>
+      <p>오류를 사람이 아니라 시스템이 분류·복구하게 만드는 자가복구 설계, 무중단 점진적 마이그레이션(Express→NestJS), 백오피스 공통화로 반복 운영 비용을 줄여왔습니다. 한 시스템을 오래 책임지며 다듬는 일을 선호합니다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FLAGSHIP -->
+<section>
+  <h2>Flagship</h2>
+  <div class="h2sub">대표 시스템 — 분산 정산 플랫폼</div>
+  <p class="lead" style="font-size:17px">교육 콘텐츠 마켓플레이스의 정산을 <b>메인 백엔드(정산 producer·환불 오케스트레이션)</b>와 <b>정산 서버(정산 엔진·조회 최적화)</b> 두 서비스로 나눠 설계·운영했습니다. 결제(동기)와 정산(익일 PG 수수료 의존, 비동기)의 시점 차이를 두 서비스 경계로 흡수한 구조이며, 파이프라인 양 끝을 모두 직접 소유했습니다.</p>
+  <p class="small" style="margin-top:12px">설계 배경과 의사결정 — payout 레거시 진단, 2단계 파이프라인, Strategy/Template, CQRS, SQS FIFO 멱등성, advisory lock — 은 <a href="settlement.html">정산 시스템 Deep Dive</a>에 따로 정리했습니다.</p>
+</section>
+
+<!-- CASE STUDIES -->
+<section>
+  <h2>Selected Work</h2>
+  <div class="h2sub">대표 문제 해결 경험</div>
+
+  <!-- 1 -->
+  <div class="card case">
+    <span class="tag">Domain · 0→1 Design</span>
+    <h3>① 수기 엑셀 정산을 시스템으로 — 정산 플랫폼 0→1 설계</h3>
+    <p class="lead-prob">합류 당시 정산은 전용 시스템 없이 100% 수기 엑셀로 관리됐습니다. 출판사(원저작권)와 저자(2차 저작권) 권리가 동시에 얽혀 단일 수취인이 아닌 다중 분배가 필요했고, 거래량이 늘수록 정합성 오류가 비례해 늘었습니다. 본질은 자동화 부족이 아니라 확장이 불가능한 구조였습니다.</p>
+    <dl class="kv">
+      <dt>설계 판단</dt>
+      <dd>도메인 난제를 세 갈래로 나눠 풀었습니다 — <b>1:N 저작권 분배</b>(수업자료 1개에 여러 작품이 섞여 작품 단위 분할), <b>이용권 일할 정산 + 점유율 동적 반영</b>(결제 기간을 일할 계산하면서 실제 이용 점유율을 월별 교차 반영), <b>복합 결제수단</b>(PG·캐시·포인트 혼합에 따른 부가세·가치 인정 처리).</dd>
+      <dt>구조</dt>
+      <dd>주문(Order) → 정산 기초 데이터(Prep) → 정산(Settlement)으로 단계를 분리하고, 정산 오류를 에러 코드로 구조화해 운영자가 백오피스에서 직접 보정하되 <b>원본은 수정하지 않는</b> 자가복구 구조를 만들었습니다.</dd>
+    </dl>
+    <div class="verdict">수기 작업을 시스템으로 전환했고, 이후 데이터가 천만 건대로 성장하는 동안의 정산 기반이 됐습니다. 이 설계가 뒤의 조회 최적화(②)와 분산 정산 아키텍처로 이어집니다.</div>
+  </div>
+
+  <!-- 2 -->
+  <div class="card case">
+    <span class="tag">Scale · Data Architecture</span>
+    <h3>② 천만 건 정산 데이터 조회 구조 개선</h3>
+    <p class="lead-prob">정산 데이터 약 800만 건, 이용 로그 약 1,100만 건 규모에서 성수기 한 달의 무거운 정산 유형(약 166만 건) 조회가 약 19초까지 걸려, 엑셀 다운로드가 사실상 불가능했습니다.</p>
+    <p class="small" style="margin:14px 0 0;color:var(--ink2);font-size:14.5px"><b>분석</b> — 정공법을 차례로 시도하며 한계를 확정했습니다.</p>
+    <ol class="seq">
+      <li><b>테이블 튜닝(VACUUM·REINDEX)</b> — dead tuple·bloat는 해소됐지만 19초는 그대로였습니다.</li>
+      <li><b>월별 파티셔닝</b> — 프루닝은 정상 작동했으나, 단일 파티션 안의 대량 행 × 다중 조인 앞에서 옵티마이저가 비용 계산상 인덱스를 버리고 Seq Scan을 택하는 것이 진짜 원인이었습니다. 파티셔닝은 범위를 쪼갤 뿐 조인 비용을 줄이지 못한다는 것을 EXPLAIN ANALYZE로 확인했습니다.</li>
+    </ol>
+    <dl class="kv">
+      <dt>판단</dt>
+      <dd>문제를 쿼리 레벨에서 <b>데이터 모델 레벨로 옮겼습니다</b>. 필요한 컬럼을 모두 비정규화한 조회 전용 Flat Table(조인 0), 읽기/쓰기 DB 물리 분리, 메시지 큐 기반 동기화(생성·확정 이벤트 → Flat Table upsert)로 읽기 경로를 분리했습니다(CQRS).</dd>
+    </dl>
+    <div class="verdict">다중 조인이 단일 테이블 스캔으로 바뀌며 조회가 크게 개선됐습니다. 1·2차 튜닝으로 "튜닝으로는 안 풀리는 문제"임을 먼저 확정하고, 옵티마이저의 선택을 비용 모델로 이해한 뒤 문제 레이어 자체를 옮긴 판단이 핵심입니다.</div>
+  </div>
+
+  <!-- 3 -->
+  <div class="card case">
+    <span class="tag">Async · Throughput</span>
+    <h3>③ Bull Queue 워터마크 처리 병목 분석</h3>
+    <p class="lead-prob">개별 작업은 1~5초면 끝나는데 사용자 대기 시간이 최대 31분까지 치솟았습니다.</p>
+    <dl class="kv">
+      <dt>원인</dt>
+      <dd>"작업이 느린 것"과 "큐가 밀리는 것"을 분리하는 데서 출발했습니다. 문제는 실행 시간이 아니라 대기 시간이었고, 근본 원인은 <code>concurrency</code> 미설정(기본값 1)이었습니다. 인스턴스당 한 번에 한 건만 처리하는데 유입량이 처리 용량의 약 3.5배라 백로그가 쌓였습니다.</dd>
+    </dl>
+    <p class="small" style="margin:14px 0 0;color:var(--ink2);font-size:14.5px"><b>해결</b> — 단순 동시성 증설로 끝내지 않았습니다.</p>
+    <ul class="clean">
+      <li>concurrency를 작업 성격(I/O bound)과 리소스 경합을 계산해 단계적으로 상향</li>
+      <li>producer가 worker 설정을 덮어쓰던 <code>lockDuration</code> 우선순위 함정 제거</li>
+      <li>stalled를 "막기"가 아니라 "멱등하게 처리하기"로 전환 (중간 결과 선저장 + <code>onStalled</code> 완료 확인)</li>
+      <li>SIGTERM 시 새 작업을 거부하고 처리 중인 작업을 기다리는 graceful shutdown</li>
+      <li>대기 시간과 처리 시간을 분리 로깅, 오토스케일링 지표를 CPU 기준으로 교체(scale-up 민감·scale-down 보수)</li>
+    </ul>
+    <div class="verdict">큐 적체가 해소되고 stalled 중복 처리가 제거됐습니다. concurrency 상향으로 이론상 처리량을 한 자릿수 배수로 늘릴 수 있습니다(이론).</div>
+  </div>
+
+  <!-- 4 -->
+  <div class="card case">
+    <span class="tag">Debugging · Native Layer</span>
+    <h3>④ Node.js 워커 RSS 메모리 누수 추적</h3>
+    <p class="lead-prob">이미지 처리 워커의 RSS가 시간당 수백 MB씩 우상향하다 <code>spawn ENOMEM</code>으로 죽고, 컨테이너가 반복 재시작됐습니다.</p>
+    <p class="small" style="margin:14px 0 0;color:var(--ink2);font-size:14.5px"><b>디버깅</b> — 가설을 차례로 기각하며 좁혀갔습니다.</p>
+    <ol class="seq">
+      <li>ArrayBuffer 누수 의심 → 수정했으나 효과 미미. 이때 <b>heap도 external도 정상인데 RSS만 오른다</b>는 사실에서 네이티브 레이어 문제로 방향을 잡았습니다.</li>
+      <li>glibc 단편화(<code>MALLOC_ARENA_MAX=2</code>) → 상승 속도는 절반으로 줄었지만 방향은 그대로. 원인이 아니라 증상 완화임을 확인했습니다.</li>
+      <li>단편화를 억제하자 가려져 있던 heap의 완만한 상승이 드러났습니다. "heap이 정상"은 단편화에 가린 착시였습니다.</li>
+      <li>과거 OOM 때 <code>--max-old-space-size</code>를 올린 조치가 오히려 GC를 게으르게 만들어 RSS 누적을 가속하고 있었습니다. <b>인과가 거꾸로였음</b>을 인식하고 limit을 낮춰 GC를 적극화했습니다.</li>
+    </ol>
+    <dl class="kv">
+      <dt>근본 원인</dt>
+      <dd><code>node-canvas</code>(Cairo C++ 바인딩)가 네이티브 이미지 버퍼의 external 메모리를 작업 종료 후 V8에 반납하지 않아, heap/external 지표는 깨끗한 채 RSS에만 축적되고 있었습니다.</dd>
+      <dt>해결</dt>
+      <dd>Rust/skia 기반 <code>@napi-rs/canvas</code>로 교체(API 호환·prebuilt). 메모리 사용률을 약 40%에서 7% 수준으로 낮추고 이후 수평을 유지했으며, 처리량이 늘어난 피크 구간에서도 누수 패턴이 사라졌습니다. 검증 기준은 배포 직후가 아니라 피크를 통과한 뒤로 잡았습니다.</dd>
+    </dl>
+    <div class="verdict">RSS만 오르면 애플리케이션이 아니라 네이티브 레이어부터 본다는 디버깅 순서, 잘못된 처방(heap 증설)이 역효과라는 인과 반전 인식, 신뢰할 수 있는 검증 기준 설계가 핵심 기여입니다.</div>
+  </div>
+</section>
+
+<!-- DEEP DIVE POINTER -->
+<section>
+  <div class="deep">
+    <h3>정산 시스템 Deep Dive</h3>
+    <p>정산 도메인의 설계 배경과 의사결정 — payout 레거시 진단, settlement_prep 2단계 파이프라인, Strategy/Template, CQRS, SQS FIFO 멱등성, advisory lock, 커밋 후 발행, 데이터 모델링 — 은 시니어·면접관용 기술 문서로 따로 정리했습니다. → <a href="settlement.html">settlement-portfolio</a></p>
+  </div>
+</section>
+
+<!-- STACK -->
+<section>
+  <h2>Tech Stack</h2>
+  <div class="h2sub">기술 스택</div>
+  <div class="stack">
+    <div class="grp"><div class="t">Core</div><div class="chips"><span>TypeScript</span><span>NestJS</span><span>Node.js</span><span>RxJS</span><span>PHP / Laravel</span></div></div>
+    <div class="grp"><div class="t">Data</div><div class="chips"><span>PostgreSQL</span><span>MySQL</span><span>Redis</span><span>TypeORM</span><span>Multi-DB (CQRS)</span></div></div>
+    <div class="grp"><div class="t">Async & Cloud</div><div class="chips"><span>AWS SQS FIFO</span><span>DLQ</span><span>S3</span><span>Beanstalk</span><span>CloudWatch</span><span>Bull Queue</span></div></div>
+    <div class="grp"><div class="t">Integration & Ops</div><div class="chips"><span>Toss Payments</span><span>Slack API</span><span>ExcelJS (stream)</span><span>AdminJS</span><span>LocalStack</span></div></div>
+  </div>
+</section>
+
+<footer>
+  고은지 (Elin) · 백엔드 엔지니어 · Node.js / NestJS / PostgreSQL / AWS<br>
+  회사 식별 정보와 사업 지표는 제거하고 기술적 의사결정만 일반화해 정리했습니다. 측정하지 않은 이론값은 "(이론)"으로 표기했습니다.
+</footer>
+
+</div>
+</body>
+</html>
