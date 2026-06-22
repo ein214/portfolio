@@ -34,7 +34,7 @@
 **주식회사 큐브시스템** · 2018.04 ~ 2020.06 · 블록체인 월렛·API, Laravel 배치·정산.
 **(주)이비즈네트웍스** · 2013.03 ~ 2017.11 · 여행 플랫폼·관리자, 제휴 REST API, 검색 성능 개선.
 
-*초기 경력(2011~2012) 포함 총 14년 2개월. 상세 경력은 [전체 프로필](https://github.com/ein214) 참고.*
+*초기 경력(2011~2012) 포함 총 14년 2개월. 상세 경력은 [전체 프로필](https://github.com/ein214/ein214) 참고.*
 
 **기술 스택** — Node.js · NestJS · TypeScript · PHP · Laravel / PostgreSQL · MySQL · Redis / AWS(Beanstalk · SQS · S3 · CloudWatch)
 
