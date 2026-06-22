@@ -109,16 +109,15 @@
   <header>
     <div class="eyebrow">Backend Portfolio · Settlement Domain</div>
     <h1>정산 시스템 설계·고도화</h1>
-    <p class="lead">결제 시점에 단일 테이블로 정산금을 확정하던 레거시(<span class="mono mono-pill">payout</span>)를,
-      <b>결제 시점과 정산 시점을 분리한 2단계 파이프라인</b>(<span class="mono mono-pill">settlement_prep</span> → SQS → <span class="mono mono-pill">settlement</span>)으로 재설계하고,
-      <b>혼합결제 환불을 결제수단별로 정확히 역산하는 오케스트레이션</b>까지 구축.
-      나아가 정산을 받아 계산·평탄화하는 <b>정산 서버</b>(전략 엔진 · CQRS 조회 · self-healing)까지, 분산 정산 파이프라인의 양 끝을 직접 설계했다.</p>
+    <p class="lead">결제 시점에 단일 테이블로 정산금을 확정하던 레거시(<span class="mono mono-pill">payout</span>)를
+      <b>결제 시점과 정산 시점을 분리한 2단계 파이프라인</b>(<span class="mono mono-pill">settlement_prep</span> → SQS → <span class="mono mono-pill">settlement</span>)으로 재설계했습니다.
+      <b>혼합결제 환불을 결제수단별로 정확히 역산하는 오케스트레이션</b>도 함께 구축했습니다.
+      나아가 정산을 받아 계산·평탄화하는 <b>정산 서버</b>(전략 엔진 · CQRS 조회 · self-healing)까지 맡아 분산 정산 파이프라인의 양 끝을 직접 설계했습니다.</p>
     <div class="meta">
       <span class="chip"><b>기간</b> 2024.02 – 운영 중 (~2년+)</span>
       <span class="chip"><b>역할</b> 정산 도메인 단독 설계·구현·운영</span>
       <span class="chip"><b>스택</b> NestJS · PostgreSQL · AWS SQS(FIFO) · TypeORM · Multi-DB</span>
     </div>
-    <p class="lead" style="margin-top:18px;font-size:.95rem">이 문서는 채용 담당자용 요약이 아니라 <b>시니어·면접관용 기술 심화 문서</b>다. 메인 포트폴리오에서 생략한 설계 배경과 의사결정 근거를 담는다. 회사 식별 정보·사업 지표는 제거했고, 측정값만 단정하고 이론값은 "(이론)"으로 표기했다.</p>
   </header>
 
   <h2>진화 타임라인</h2>
@@ -168,8 +167,8 @@
         <div class="node async"><div class="nt">Flat 조회 DB</div><div class="ns">ReadDBUpdater 평탄화<br>CQRS · 별도 DB</div></div>
       </div>
       <p style="text-align:center;color:var(--dim);font-size:.8rem;margin:20px 0 0">
-        핵심: 이 백엔드는 <b style="color:var(--mut)">최종 settlement을 직접 만들지 않는다.</b> 아는 만큼만 prep에 커밋하고, 익일 도착하는 PG 수수료는 별도 정산 서버가 SQS로 받아 채운다 — <b style="color:var(--mut)">결제(동기)와 정산(비동기)의 시점 분리.</b>
-        정산 서버는 Settlement를 만든 뒤 <span class="mono">settlement.processed.*</span> 이벤트로 조회용 Flat 테이블을 비동기 평탄화해, <b style="color:var(--mut)">쓰기와 조회를 물리적으로 분리한다(CQRS).</b>
+        핵심: 메인 백엔드는 <b style="color:var(--mut)">최종 settlement을 직접 만들지 않습니다.</b> 아는 만큼만 prep에 커밋하고 익일 확정되는 PG 수수료는 별도 정산 서버가 SQS로 받아 채웁니다 — <b style="color:var(--mut)">결제(동기)와 정산(비동기)의 시점 분리.</b>
+        정산 서버는 Settlement를 만든 뒤 <span class="mono">settlement.processed.*</span> 이벤트로 조회용 Flat 테이블을 비동기 평탄화해 <b style="color:var(--mut)">쓰기와 조회를 물리적으로 분리합니다(CQRS).</b>
       </p>
     </div>
   </div>
@@ -178,11 +177,11 @@
 
   <div class="phase p1">
     <div class="ph-num">Phase 1</div>
-    <div class="ph-title">죽은 도메인 <span class="mono">payout</span> 진단 → <span class="mono">settlement_prep</span> 재설계</div>
+    <div class="ph-title">구조적 한계에 도달한 <span class="mono">payout</span> 진단 → <span class="mono">settlement_prep</span> 재설계</div>
     <div class="block"><span class="lbl prob">● 문제</span>
       <ul>
-        <li><b>단일 금액 모델 vs 혼합결제 현실</b> — 결제수단별 금액 분해 개념이 없어, 혼합결제·부분환불이 들어오자 수수료 계산을 주석 처리하고 jsonb로 도피</li>
-        <li><b>결제 시점 ≠ 정산 시점</b> — 정기결제 N회차에서 미리 생성된 payout이 회차 계산을 깨뜨림 → 시간 컬럼 트릭·휴리스틱으로 땜질</li>
+        <li><b>단일 금액 모델 vs 혼합결제 현실</b> — 결제수단별 금액 분해 개념이 없어, 혼합결제·부분환불이 들어오자 수수료 계산이 비활성화되고 확장 요구는 jsonb 필드에 누적 → 도메인 응집도 약화</li>
+        <li><b>결제 시점 ≠ 정산 시점</b> — 정기결제 N회차에서 미리 생성된 payout이 회차 계산을 깨뜨림 → 시간 컬럼·휴리스틱 기반 보완 로직이 점진적으로 누적</li>
         <li><b><span class="mono">payouts[0]</span> 단일 요소 가정</b> — 0개·복수일 때 정산 누락/예외 → 방어코드 반복 누적</li>
       </ul>
     </div>
@@ -196,7 +195,7 @@
     </div>
     <div class="block"><span class="lbl res">● 결과</span>
       <ul>
-        <li>절차적 1개 메서드(169줄) → <b>전략별 분리된 테스트 가능 구조</b>, 레거시 정산 엔진 <b>~1,900줄 폐기·재작성</b></li>
+        <li>절차적으로 얽혀 있던 정산 로직을 <b>전략별로 분리된 테스트 가능한 구조</b>로 재설계, 레거시 정산 엔진 <b>약 1,900줄 재작성</b></li>
         <li>8종 주문유형(EBOOK/ALADIN/POD/CASH/PACKAGE/SEPARATE/UPGRADE/멤버십)을 <b>단일 출력 포맷으로 수렴</b></li>
       </ul>
     </div>
@@ -215,19 +214,19 @@
     <div class="block"><span class="lbl act">● 행동</span>
       <ul>
         <li><b>무거운 계산을 SQS 뒤로 이동</b> — Service 의존성 5개 → 1개, 주문은 prep만 저장하고 즉시 응답</li>
-        <li><b>FIFO 두 키 분리 설계</b> — <span class="mono">groupId</span>(순서: 주문 직렬·청크 병렬) / <span class="mono">deduplicationId</span>(멱등: 5분 윈도우 중복 차단). <span class="ref">초기 혼동 → 3개 커밋에 걸쳐 분리·정제한 의사결정 이력</span></li>
+        <li><b>FIFO 두 키 분리 설계</b> — <span class="mono">groupId</span>(순서: 주문 직렬·청크 병렬) / <span class="mono">deduplicationId</span>(멱등: 5분 윈도우 중복 차단)</li>
         <li><b>멱등성 2중 방어선</b> — FIFO dedup(단기) + <span class="mono">SqsMessageLog</span>(영구 감사, 메시지 1건 → 비즈니스 엔티티 1:N 전개로 역추적)</li>
-        <li><b>재시도 3단 폴백</b> — SDK 지수 백오프(상한 20s) → Slack 에스컬레이션 → 배치/수동 재처리</li>
+        <li><b>재시도 전략</b> — SDK 지수 백오프(상한 20s) → Slack 에스컬레이션 → 배치/수동 재처리</li>
         <li><b>Producer 분리</b> — 일반 정산(고빈도) vs 환불/관리자(저빈도)를 별도 큐로 트래픽·멱등 전략 차등화</li>
       </ul>
     </div>
     <div class="block"><span class="lbl res">● 결과</span>
       <ul>
         <li>정산 계산이 결제 응답시간에서 제거, 정산 장애가 주문에 전파되지 않도록 <b>격리</b></li>
-        <li>순서 필요 단위(주문)는 직렬화 / 처리량 필요 단위(청크)는 병렬화 — <b>trade-off를 groupId 입도로 명시</b></li>
+        <li>순서가 필요한 단위(주문)는 직렬화하고 처리량이 필요한 단위(청크)는 병렬화하도록 <b>groupId 단위를 설계</b></li>
       </ul>
     </div>
-    <div class="tags"><span class="tag">분산 시스템</span><span class="tag">SQS FIFO</span><span class="tag">멱등성</span><span class="tag">exactly-once 근사</span><span class="tag">부하 분산</span><span class="tag">장애 격리</span></div>
+    <div class="tags"><span class="tag">분산 시스템</span><span class="tag">SQS FIFO</span><span class="tag">멱등성</span><span class="tag">부하 분산</span><span class="tag">장애 격리</span></div>
   </div>
 
   <div class="phase p3">
@@ -242,36 +241,36 @@
     <div class="block"><span class="lbl act">● 행동</span>
       <ul>
         <li><b>order_payment — 결제수단별 원장 정규화</b> — 환불은 음수가 아니라 status만 바꾼 mirror row + <span class="mono">parent_payment_id</span>(self-FK)</li>
-        <li><b>2층 auto distribution</b> — ① 주문레벨 포인트→캐시→PG 소진(내부자산 우선) ② 아이템레벨 비례+잔차 흡수로 구매·환불 prep 합계 일치</li>
-        <li><b>PostgreSQL advisory lock</b> — <span class="mono">pg_advisory_xact_lock('refund:'+orderId)</span>로 다중 테이블 환불을 단일 키로 직렬화. 행 락보다 단순·견고, 트랜잭션 스코프로 자동 해제</li>
+        <li><b>2단계 분배 로직</b> — ① 주문 레벨: 포인트→캐시→PG 순 차감(내부자산 우선) ② 아이템 레벨: 비례 분배 + 잔차 흡수로 구매·환불 prep 합계 일치</li>
+        <li><b>PostgreSQL advisory lock</b> — <span class="mono">pg_advisory_xact_lock('refund:'+orderId)</span>로 다중 테이블 환불을 단일 키로 직렬화. 트랜잭션 스코프로 자동 해제</li>
         <li><b>커밋 후 SQS 발행</b> — <span class="mono">runOnTransactionCommit</span>으로 발행을 커밋 이후로 지연 → consumer가 미커밋 prep을 못 읽는 read-after-write race 차단</li>
-        <li><b>보상 불가 지점 명시</b> — PG 취소 실패는 <span class="mono">[REFUND_PG_CANCEL_FAILED]</span> CRITICAL 로그로 별도 관리</li>
+        <li><b>보상 불가 구간 분리</b> — 보상 트랜잭션으로 되돌릴 수 없는 PG 취소 실패는 <span class="mono">[REFUND_PG_CANCEL_FAILED]</span> CRITICAL 로그로 별도 관리</li>
       </ul>
     </div>
     <div class="block"><span class="lbl res">● 결과</span>
       <ul>
         <li>혼합결제의 부분/전액·다회 환불을 결제수단별로 정확히 역산, 누적 환불의 원결제 초과 방지</li>
-        <li>동시 환불 직렬화로 PG 이중취소·자산 이중복구 <b>원천 차단</b></li>
+        <li>동시 환불을 직렬화해 PG 이중취소·자산 이중복구를 <b>구조적으로 방지</b></li>
       </ul>
     </div>
     <div class="tags"><span class="tag">동시성 제어</span><span class="tag">advisory lock</span><span class="tag">분산 트랜잭션</span><span class="tag">보상 트랜잭션</span><span class="tag">결제수단별 원장</span><span class="tag">race condition 해결</span></div>
   </div>
 
   <h2>정산 서버 — 정산 엔진 · 조회 최적화</h2>
-  <p style="color:var(--mut);font-size:.95rem;margin:-6px 0 18px">메인 백엔드가 보낸 <span class="mono mono-pill">settlement_prep</span>을 받아 최종 정산을 계산하고, 조회·리포팅을 읽기 전용 모델로 분리한 정산 전용 서비스. 코드 지표는 리포지토리 실측값 — 프로덕션 약 25.3k LOC(208 TS 파일), 테스트 비중 약 37%(14.6k LOC · 29 spec), 정산 전략 9종, 엔티티/모듈 43/16.</p>
+  <p style="color:var(--mut);font-size:.95rem;margin:-6px 0 18px">메인 백엔드가 보낸 <span class="mono mono-pill">settlement_prep</span>을 받아 최종 정산을 계산하고, 조회·리포팅을 읽기 전용 모델로 분리한 정산 전용 서비스. 코드 지표는 리포지토리 실측값 — 프로덕션 약 25k LOC(208 TS 파일), 테스트 비중 약 37%, 정산 전략 9종, 엔티티·모듈 43/16 규모.</p>
 
   <div class="phase p2">
     <div class="ph-num">Engine</div>
     <div class="ph-title">9개 정산 모델을 Strategy + Template Method로 통합</div>
     <div class="block"><span class="lbl act">● 설계</span>
       <ul>
-        <li>단건·이용권·월정액·사용량 구독·전문가(영/국)·PG수수료 동기화 등 모델마다 데이터 출처와 분배 수식이 다르지만, <span class="mono">execute() → getTargets() → processTargets() → buildResult()</span> 골격은 동일</li>
+        <li>단건·이용권·월정액·사용량 구독·문항별 정산(영어, 국어)·PG수수료 동기화 등 모델마다 데이터 출처와 분배 수식이 다르지만, <span class="mono">execute() → getTargets() → processTargets() → buildResult()</span> 골격은 동일</li>
         <li>공통 골격을 <span class="mono">BaseSettlementStrategy</span>의 템플릿 메서드로 고정하고, 각 모델은 차이나는 단계만 구현 → 새 수익 모델을 기존 전략을 건드리지 않고 <b>클래스 하나 추가로 확장(OCP)</b></li>
-        <li>계산은 3계층 파이프라인 — 기본 분배 → 정산 타입별(이용권 COUNT/AMOUNT, 전문가 3단계 단가) → 저자/출판사 계약 비율 → 최소금액 보정</li>
+        <li>계산은 3계층 파이프라인 — 기본 분배 → 정산 타입별(이용권 COUNT/AMOUNT, 문항별 정산 3단계 단가) → 저자/출판사 계약 비율 → 최소금액 보정</li>
       </ul>
     </div>
     <div class="block"><span class="lbl res">● 효과</span>
-      <ul><li>switch 분기 폭발을 구조로 제거. 전략별로 분리·테스트 가능한 구조</li></ul>
+      <ul><li>유형 증가에 따라 커지는 조건 분기를 전략 패턴으로 구조화. 전략별로 분리·테스트 가능한 구조</li></ul>
     </div>
     <div class="tags"><span class="tag">Strategy/Template Method</span><span class="tag">OCP</span><span class="tag">정산 데이터 모델링</span></div>
   </div>
@@ -282,11 +281,11 @@
     <div class="block"><span class="lbl act">● 설계</span>
       <ul>
         <li>부가세 <span class="mono">round(price / 11)</span>, 분배가 <span class="mono">round(price / N)</span> 정수 연산으로 계산하고 잔여 손실을 통제</li>
-        <li>핵심 원칙은 <b>이미 계산된 정산 금액은 절대 수정하지 않는다</b> — 변경이 필요하면 기존 건을 취소(soft-delete)하고 새 건으로 재정산</li>
+        <li>핵심 원칙은 <b>확정된 정산 금액을 in-place로 수정하지 않는다는 것</b>입니다 — 변경이 필요하면 기존 건을 취소(soft-delete)하고 새 건으로 재정산합니다</li>
       </ul>
     </div>
     <div class="block"><span class="lbl res">● 근거</span>
-      <ul><li>회계·세무·저작권 정산은 "언제·무엇이·왜 바뀌었는가"가 데이터에 영원히 남아야 분쟁과 마감 정정에 대응할 수 있고, in-place update는 그 과거를 지운다</li></ul>
+      <ul><li>회계·세무·저작권 정산은 "언제·무엇이·왜 바뀌었는가"가 데이터에 영원히 남아야 분쟁과 마감 정정에 대응할 수 있고 in-place update는 그 과거를 지웁니다</li></ul>
     </div>
     <div class="tags"><span class="tag">정수 연산 분배</span><span class="tag">불변성</span><span class="tag">감사 추적(audit trail)</span></div>
   </div>
@@ -298,7 +297,7 @@
       <ul>
         <li>트랜잭션용 정규화 DB(master/slave 복제)와 조회·리포팅용 비정규화 Flat DB를 <b>물리적으로 분리</b></li>
         <li>정산 전략이 처리를 끝내면 <span class="mono">settlement.processed.*</span> 이벤트를 발행하고, <span class="mono">ReadDBUpdater</span>가 복잡한 JOIN 결과를 Flat 테이블로 평탄화</li>
-        <li>평탄화 실패가 정산 본처리를 망치지 않도록 개별 실패는 <span class="mono">ERR_70</span> 로그만 남기고 진행 — <b>장애 격리</b></li>
+        <li>조회용 평탄화 실패가 정산 본처리에 영향을 주지 않도록 읽기 모델 갱신 오류는 별도로 기록하고 진행 — <b>장애 격리</b></li>
       </ul>
     </div>
     <div class="block"><span class="lbl res">● 효과</span>
@@ -309,12 +308,12 @@
 
   <div class="phase p3">
     <div class="ph-num">Self-healing</div>
-    <div class="ph-title">자가 치유 에러 시스템 — 검증 3단계 · 25 에러코드 · 5 복구 액션</div>
+    <div class="ph-title">오류 분류·추적·자동 복구 체계 — 검증 3단계 · 에러코드 분류 · 복구 액션 표준화</div>
     <div class="block"><span class="lbl act">● 설계</span>
       <ul>
         <li>정산 오류를 "나면 사람이 본다"가 아니라 <b>분류 → 추적 → 자동 복구</b> 파이프라인으로 전환</li>
         <li>생명주기별 검증 3단계 — Creation(입력·출처 ERR_03/04) → Strategy(금액 정합 ERR_12/14) → Scheduler(합계·중복 ERR_13/90)</li>
-        <li>25종·5카테고리 에러코드, 5개 복구 액션 — CONTRACT_REMAP(계약변경 재계산) · REGENERATE(완전 재생성) · CREATE_MISSING(누락 보충) · FULL_AUDIT(월별 9종 병렬 점검) · REFUND/RECALL(관리자 액션)</li>
+        <li>에러코드를 유형별로 분류하고 복구 액션을 표준화 — CONTRACT_REMAP(계약변경 재계산) · REGENERATE(완전 재생성) · CREATE_MISSING(누락 보충) · FULL_AUDIT(월별 9종 병렬 점검) · REFUND/RECALL(관리자 액션)</li>
         <li>ErrorLog(감지) + ResolutionLog(해결 이력) 2계층 로깅으로 누가·어떻게·무엇을 고쳤는지 영구 기록</li>
       </ul>
     </div>
@@ -341,8 +340,8 @@
       <li><b>결제 응답 경로에서 정산 계산 제거</b> — 무거운 비율·분배·세금 계산을 SQS 뒤로 옮겨, 주문 트랜잭션은 prep만 저장하고 즉시 응답</li>
       <li><b>정산 장애의 주문 전파 차단</b> — 정산 실패가 결제·주문 실패로 번지지 않도록 격리</li>
       <li><b>혼합결제 환불의 정확한 역산</b> — 포인트·캐시·PG 결제수단별 원장으로 부분/전액·다회 환불을 정확히 되돌리고, 누적 환불의 원결제 초과를 방지</li>
-      <li><b>중복 정산·이중 취소 차단</b> — FIFO 멱등 + advisory lock 직렬화로 재시도·동시 요청에도 "정확히 한 건"</li>
-      <li><b>죽은 레거시의 구조적 재작성</b> — 단일 금액 모델의 한계를 진단하고 정산 엔진을 전략별로 분리·테스트 가능한 구조로 재설계</li>
+      <li><b>중복 정산·이중 취소 차단</b> — FIFO 멱등성과 advisory lock 직렬화로 재시도·동시 요청 상황에서도 중복 정산과 이중 취소를 애플리케이션 레벨에서 방지</li>
+      <li><b>레거시 정산 엔진의 구조적 재작성</b> — 단일 금액 모델의 한계를 진단하고 정산 엔진을 전략별로 분리·테스트 가능한 구조로 재설계</li>
     </ul>
   </div>
 
