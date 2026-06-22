@@ -1,8 +1,5 @@
 # Portfolio
 
-정산·결제 도메인을 0부터 설계하고 천만 건 규모로 운영하며 만난 문제들의 기록입니다.
-회사 식별 정보와 사업 지표는 제거하고 기술적 의사결정 과정만 일반화해 정리했습니다.
-
 🌐 **[라이브 사이트](https://ein214.github.io/portfolio/)** · 🧩 **[정산 시스템 Deep Dive](https://ein214.github.io/portfolio/settlement.html)** · 👤 **[전체 프로필](https://github.com/ein214)**
 
 ---
