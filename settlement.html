@@ -112,7 +112,7 @@
     <p class="lead">결제 시점에 단일 테이블로 정산금을 확정하던 레거시(<span class="mono mono-pill">payout</span>)를
       <b>결제 시점과 정산 시점을 분리한 2단계 파이프라인</b>(<span class="mono mono-pill">settlement_prep</span> → SQS → <span class="mono mono-pill">settlement</span>)으로 재설계했습니다.
       <b>혼합결제 환불을 결제수단별로 정확히 역산하는 오케스트레이션</b>도 함께 구축했습니다.
-      나아가 정산을 받아 계산·평탄화하는 <b>정산 서버</b>(전략 엔진 · CQRS 조회 · self-healing)까지 맡아 분산 정산 파이프라인의 양 끝을 직접 설계했습니다.</p>
+      나아가 정산을 받아 계산·평탄화하는 <b>정산 서버</b>(전략 엔진 · CQRS 조회 · 복구 파이프라인)까지 맡아 정산 데이터 생성부터 최종 정산·조회 모델까지 전체 파이프라인을 설계·구현했습니다.</p>
     <div class="meta">
       <span class="chip"><b>기간</b> 2024.02 – 운영 중 (~2년+)</span>
       <span class="chip"><b>역할</b> 정산 도메인 단독 설계·구현·운영</span>
@@ -135,7 +135,7 @@
     <div class="tl-item purple">
       <div class="tl-date">2025.10 · Phase 1</div>
       <div class="tl-title">settlement_prep 재설계</div>
-      <div class="tl-desc">결제수단별 금액 분해 + 전략 패턴 + 순수 도메인 객체 도입 / 레거시 정산 엔진 ~1,900줄 폐기·재작성</div>
+      <div class="tl-desc">결제수단별 금액 분해 + 전략 패턴 + 순수 도메인 객체 도입 / 약 1,900줄 규모의 레거시 정산 엔진 재작성</div>
     </div>
     <div class="tl-item green">
       <div class="tl-date">2025.10 – 11 · Phase 2</div>
@@ -164,10 +164,10 @@
         <div class="arrow"><div class="al">비동기 consume</div><div class="ab">→</div></div>
         <div class="node ext"><div class="nt">정산 서버</div><div class="ns">익일 PG수수료 반영<br>→ Settlement 생성</div></div>
         <div class="arrow"><div class="al">settlement.processed.* 이벤트</div><div class="ab">→</div></div>
-        <div class="node async"><div class="nt">Flat 조회 DB</div><div class="ns">ReadDBUpdater 평탄화<br>CQRS · 별도 DB</div></div>
+        <div class="node async"><div class="nt">조회 전용 DB</div><div class="ns">ReadDBUpdater 평탄화<br>CQRS · 비정규화</div></div>
       </div>
       <p style="text-align:center;color:var(--dim);font-size:.8rem;margin:20px 0 0">
-        핵심: 메인 백엔드는 <b style="color:var(--mut)">최종 settlement을 직접 만들지 않습니다.</b> 아는 만큼만 prep에 커밋하고 익일 확정되는 PG 수수료는 별도 정산 서버가 SQS로 받아 채웁니다 — <b style="color:var(--mut)">결제(동기)와 정산(비동기)의 시점 분리.</b>
+        핵심: 메인 백엔드는 <b style="color:var(--mut)">최종 settlement을 직접 만들지 않습니다.</b> 결제 시점에 확정 가능한 정보만 prep에 기록하고 익일 확정되는 PG 수수료는 별도 정산 서버가 SQS로 받아 채웁니다 — <b style="color:var(--mut)">결제(동기)와 정산(비동기)의 시점 분리.</b>
         정산 서버는 Settlement를 만든 뒤 <span class="mono">settlement.processed.*</span> 이벤트로 조회용 Flat 테이블을 비동기 평탄화해 <b style="color:var(--mut)">쓰기와 조회를 물리적으로 분리합니다(CQRS).</b>
       </p>
     </div>
@@ -188,9 +188,9 @@
     <div class="block"><span class="lbl act">● 행동</span>
       <ul>
         <li><b>결제수단별 금액을 1급 컬럼으로 분리</b> — <span class="mono">cashAmount / pointAmount / pgAmount / manualAmount / paymentFee</span></li>
-        <li><b>prep(준비) / settlement(최종) 2단계 분리</b> — 결제 직후 아는 만큼만 prep에 커밋, 익일 정보는 정산 서버가 채움</li>
+        <li><b>prep(준비) / settlement(최종) 2단계 분리</b> — 결제 시점에 확정 가능한 정보만 prep에 기록하고 익일 정보는 정산 서버가 채움</li>
         <li><b>순수 도메인 객체 <span class="mono">SettlementPrepBuilder</span> 추출</b> — 포인트→캐시→PG 순차 비례 배분 + 마지막 항목에 반올림 잔차를 몰아 합계 정확히 일치 (회계 정합)</li>
-        <li><b>전략 + 팩토리 패턴</b> — Ticket(건당) vs Pass(정액 구독, 500건 청킹) 정산 분기를 추상화 → 유형 추가 시 서비스 수정 없이 확장(OCP)</li>
+        <li><b>전략 + 팩토리 패턴</b> — Ticket(건당) vs Pass(정액 구독, 500건 청킹) 정산 분기를 추상화 → 유형 추가 시 서비스 수정 없이 확장</li>
       </ul>
     </div>
     <div class="block"><span class="lbl res">● 결과</span>
@@ -265,19 +265,19 @@
     <div class="block"><span class="lbl act">● 설계</span>
       <ul>
         <li>단건·이용권·월정액·사용량 구독·문항별 정산(영어, 국어)·PG수수료 동기화 등 모델마다 데이터 출처와 분배 수식이 다르지만, <span class="mono">execute() → getTargets() → processTargets() → buildResult()</span> 골격은 동일</li>
-        <li>공통 골격을 <span class="mono">BaseSettlementStrategy</span>의 템플릿 메서드로 고정하고, 각 모델은 차이나는 단계만 구현 → 새 수익 모델을 기존 전략을 건드리지 않고 <b>클래스 하나 추가로 확장(OCP)</b></li>
+        <li>공통 골격을 <span class="mono">BaseSettlementStrategy</span>의 템플릿 메서드로 고정 → 신규 정산 모델은 공통 실행 흐름을 재사용하고 <b>모델별 계산 규칙만 구현</b>하도록 분리해, 기존 전략 수정 없이 새 모델을 추가</li>
         <li>계산은 3계층 파이프라인 — 기본 분배 → 정산 타입별(이용권 COUNT/AMOUNT, 문항별 정산 3단계 단가) → 저자/출판사 계약 비율 → 최소금액 보정</li>
       </ul>
     </div>
     <div class="block"><span class="lbl res">● 효과</span>
       <ul><li>유형 증가에 따라 커지는 조건 분기를 전략 패턴으로 구조화. 전략별로 분리·테스트 가능한 구조</li></ul>
     </div>
-    <div class="tags"><span class="tag">Strategy/Template Method</span><span class="tag">OCP</span><span class="tag">정산 데이터 모델링</span></div>
+    <div class="tags"><span class="tag">Strategy/Template Method</span><span class="tag">계산 규칙 분리</span><span class="tag">정산 데이터 모델링</span></div>
   </div>
 
   <div class="phase">
     <div class="ph-num">Correctness</div>
-    <div class="ph-title">금융 정밀성 — 정수 연산과 불변성·감사 추적</div>
+    <div class="ph-title">금액 정밀성과 회계 정합성 — 정수 연산·불변성·감사 추적</div>
     <div class="block"><span class="lbl act">● 설계</span>
       <ul>
         <li>부가세 <span class="mono">round(price / 11)</span>, 분배가 <span class="mono">round(price / N)</span> 정수 연산으로 계산하고 잔여 손실을 통제</li>
@@ -295,7 +295,7 @@
     <div class="ph-title">멀티 DB 분리와 이벤트 기반 비정규화</div>
     <div class="block"><span class="lbl act">● 설계</span>
       <ul>
-        <li>트랜잭션용 정규화 DB(master/slave 복제)와 조회·리포팅용 비정규화 Flat DB를 <b>물리적으로 분리</b></li>
+        <li>트랜잭션용 정규화 DB(master/slave 복제)와 조회·리포팅용 비정규화 DB를 <b>물리적으로 분리</b></li>
         <li>정산 전략이 처리를 끝내면 <span class="mono">settlement.processed.*</span> 이벤트를 발행하고, <span class="mono">ReadDBUpdater</span>가 복잡한 JOIN 결과를 Flat 테이블로 평탄화</li>
         <li>조회용 평탄화 실패가 정산 본처리에 영향을 주지 않도록 읽기 모델 갱신 오류는 별도로 기록하고 진행 — <b>장애 격리</b></li>
       </ul>
@@ -307,17 +307,17 @@
   </div>
 
   <div class="phase p3">
-    <div class="ph-num">Self-healing</div>
-    <div class="ph-title">오류 분류·추적·자동 복구 체계 — 검증 3단계 · 에러코드 분류 · 복구 액션 표준화</div>
+    <div class="ph-num">Recovery</div>
+    <div class="ph-title">오류 분류·추적·복구 파이프라인 — 검증 3단계 · 에러코드 분류 · 복구 액션 표준화</div>
     <div class="block"><span class="lbl act">● 설계</span>
       <ul>
-        <li>정산 오류를 "나면 사람이 본다"가 아니라 <b>분류 → 추적 → 자동 복구</b> 파이프라인으로 전환</li>
-        <li>생명주기별 검증 3단계 — Creation(입력·출처 ERR_03/04) → Strategy(금액 정합 ERR_12/14) → Scheduler(합계·중복 ERR_13/90)</li>
+        <li>정산 오류를 "나면 사람이 본다"가 아니라 <b>분류 → 추적 → 표준화된 복구</b> 파이프라인으로 전환</li>
+        <li>생명주기별 검증 3단계 — Creation/입력 검증(출처 ERR_03/04) → Strategy/계산 검증(금액 정합 ERR_12/14) → Scheduler/배치 검증(합계·중복 ERR_13/90)</li>
         <li>에러코드를 유형별로 분류하고 복구 액션을 표준화 — CONTRACT_REMAP(계약변경 재계산) · REGENERATE(완전 재생성) · CREATE_MISSING(누락 보충) · FULL_AUDIT(월별 9종 병렬 점검) · REFUND/RECALL(관리자 액션)</li>
         <li>ErrorLog(감지) + ResolutionLog(해결 이력) 2계층 로깅으로 누가·어떻게·무엇을 고쳤는지 영구 기록</li>
       </ul>
     </div>
-    <div class="tags"><span class="tag">self-healing</span><span class="tag">에러코드 체계</span><span class="tag">2계층 로깅</span><span class="tag">운영 안정화</span></div>
+    <div class="tags"><span class="tag">복구 파이프라인</span><span class="tag">에러코드 체계</span><span class="tag">2계층 로깅</span><span class="tag">운영 안정화</span></div>
   </div>
 
   <div class="phase p2">

@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ListBuilder — AdminJS 리스트 페이지 빌더</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2330; --line:#2d3644;
+    --txt:#e6edf3; --mut:#9aa7b5; --dim:#6e7b8a;
+    --accent:#58a6ff; --green:#3fb950; --amber:#d29922; --red:#f85149; --purple:#bc8cff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+    line-height:1.65;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:980px;margin:0 auto;padding:48px 24px 80px}
+  code,.mono{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:.86em}
+  .mono-pill{background:#21262d;color:var(--accent);padding:1px 7px;border-radius:5px;border:1px solid var(--line);white-space:nowrap}
+  a{color:var(--accent)}
+
+  header{border-bottom:1px solid var(--line);padding-bottom:28px;margin-bottom:8px}
+  .eyebrow{color:var(--accent);font-weight:600;font-size:.8rem;letter-spacing:.12em;text-transform:uppercase}
+  h1{font-size:2.1rem;line-height:1.25;margin:.4em 0 .3em;letter-spacing:-.01em}
+  .lead{color:var(--mut);font-size:1.06rem;max-width:800px}
+  .lead b{color:var(--txt);font-weight:600}
+  .meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+  .chip{background:var(--panel);border:1px solid var(--line);border-radius:999px;
+    padding:6px 14px;font-size:.82rem;color:var(--mut)}
+  .chip b{color:var(--txt)}
+
+  h2{font-size:1.05rem;letter-spacing:.04em;text-transform:uppercase;color:var(--dim);
+    margin:54px 0 18px;font-weight:700}
+  p.sec-lead{color:var(--mut);max-width:800px;margin:-6px 0 22px}
+  p.sec-lead b{color:var(--txt)}
+
+  /* phase cards */
+  .phase{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:26px 28px;margin-bottom:22px;position:relative;overflow:hidden}
+  .phase::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--accent)}
+  .phase.p1::before{background:var(--purple)} .phase.p2::before{background:var(--green)}
+  .phase.p3::before{background:var(--amber)} .phase.p4::before{background:var(--red)}
+  .ph-num{font-size:.78rem;font-weight:700;letter-spacing:.1em;color:var(--dim);text-transform:uppercase}
+  .ph-title{font-size:1.25rem;font-weight:700;margin:3px 0 14px;letter-spacing:-.01em}
+  .block{margin:14px 0}
+  .block .lbl{font-size:.8rem;font-weight:700;letter-spacing:.04em;display:inline-flex;
+    align-items:center;gap:6px;margin-bottom:6px}
+  .lbl.prob{color:var(--red)} .lbl.act{color:var(--accent)} .lbl.res{color:var(--green)}
+  ul{margin:6px 0;padding-left:20px}
+  li{margin:6px 0;color:var(--mut)}
+  li b{color:var(--txt);font-weight:600}
+  .tags{display:flex;flex-wrap:wrap;gap:7px;margin-top:16px;padding-top:14px;border-top:1px dashed var(--line)}
+  .tag{font-size:.76rem;background:var(--panel2);border:1px solid var(--line);color:var(--mut);
+    padding:3px 10px;border-radius:6px}
+
+  /* architecture diagram */
+  .arch{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px;overflow-x:auto}
+  .arch-inner{min-width:680px;padding:22px}
+  .flow{display:flex;align-items:stretch;gap:0;justify-content:center}
+  .node{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;
+    min-width:120px;text-align:center}
+  .node .nt{font-weight:700;font-size:.9rem}
+  .node .ns{font-size:.74rem;color:var(--dim);margin-top:3px}
+  .node.cfg{border-color:#bc8cff55;background:#2a1a4a33}
+  .node.hook{border-color:#1f6feb55;background:#0d2a4a33}
+  .node.view{border-color:#3fb95055;background:#0f3a1a33}
+  .arrow{display:flex;flex-direction:column;justify-content:center;align-items:center;color:var(--dim);
+    padding:0 6px;min-width:58px}
+  .arrow .al{font-size:.68rem;white-space:nowrap;margin-bottom:2px;color:var(--dim)}
+  .arrow .ab{font-size:1.2rem;line-height:1}
+  .stack{display:flex;flex-direction:column;gap:8px}
+
+  /* stat grid */
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+  .stat .num{font-size:1.8rem;font-weight:800;letter-spacing:-.02em}
+  .stat.a .num{color:var(--accent)} .stat.g .num{color:var(--green)}
+  .stat.p .num{color:var(--purple)} .stat.m .num{color:var(--amber)}
+  .stat .cap{font-size:.82rem;color:var(--mut);margin-top:3px}
+
+  /* code blocks */
+  .codewrap{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:6px 0}
+  .codecard{background:#0b0f14;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .codecard .ct{font-size:.76rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+    padding:10px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+  .codecard.before .ct{color:var(--red)} .codecard.after .ct{color:var(--green)}
+  pre{margin:0;padding:16px;overflow-x:auto;font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
+    font-size:.78rem;line-height:1.6;color:#c9d4e0}
+  pre .c{color:var(--dim)} pre .k{color:var(--purple)} pre .s{color:var(--green)} pre .f{color:var(--accent)}
+
+  /* highlight list */
+  .hi{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px 26px 18px}
+  .hi li{margin:11px 0;color:var(--mut)}
+  .hi li b{color:var(--txt)}
+
+  table{width:100%;border-collapse:collapse;font-size:.86rem;margin-top:4px}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--dim);font-size:.76rem;text-transform:uppercase;letter-spacing:.05em}
+  td.c1{color:var(--txt);font-weight:600;white-space:nowrap}
+  td code{color:var(--accent)}
+
+  .callout{background:#10233b;border:1px solid #1f6feb55;border-radius:12px;padding:14px 18px;margin:16px 0;color:var(--mut)}
+  .callout b{color:var(--txt)}
+
+  footer{margin-top:50px;padding-top:20px;border-top:1px solid var(--line);
+    color:var(--dim);font-size:.82rem}
+  @media(max-width:640px){h1{font-size:1.6rem}.wrap{padding:32px 16px 60px}.phase{padding:20px}.codewrap{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div style="max-width:980px;margin:0 auto;padding:18px 24px 0"><a href="../index.html" style="text-decoration:none;font-size:.86rem">← 메인 포트폴리오</a></div>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Backend Portfolio · Admin Tooling · DX</div>
+    <h1>ListBuilder — AdminJS 리스트 페이지 빌더</h1>
+    <p class="lead">AdminJS의 커스텀 리스트는 <b>조회·필터·정렬·페이지네이션·엑셀·요약</b> 로직을 페이지마다 복사해 다시 짰습니다.
+      이 뼈대를 <b>설정 객체(<span class="mono mono-pill">ListPageConfig</span>)</b>로 선언하면 표준 리스트 페이지가 구성되도록 공통화하고 <b>상태 관리와 표현 계층을 분리</b>했습니다.
+      페이지마다 다른 <b>API 응답 구조와 정렬 파라미터</b>는 빌더 외부 설정으로 흡수하고 비표준 요구사항을 위한 <b>확장 포인트(슬롯·훅 단독 사용)</b>도 뒀습니다.
+      현재 <b>10개 이상의 관리자 페이지</b>가 이 빌더를 쓰고 있습니다.</p>
+    <div class="meta">
+      <span class="chip"><b>역할</b> 공통 컴포넌트 설계·구현</span>
+      <span class="chip"><b>스택</b> React · TypeScript · AdminJS · @adminjs/design-system</span>
+      <span class="chip"><b>채택</b> 주문 · 쿠폰 · 멤버십 · POD · 라이선스 정산 등 10+ 페이지</span>
+    </div>
+  </header>
+
+  <!-- WHY -->
+  <h2>① 문제 — 리스트 페이지마다 같은 코드를 다시 짠다</h2>
+  <p class="sec-lead">AdminJS는 단순 CRUD 리스트를 기본 제공합니다. 하지만 도메인별 필터·요약·엑셀이 붙는 운영용 리스트는 커스텀 페이지로 직접 만들어야 했고 그 페이지들이 <b>같은 뼈대</b>를 반복하고 있었습니다.</p>
+  <div class="phase p4">
+    <div class="ph-num">Problem</div>
+    <div class="ph-title">한 페이지를 만들 때마다 반복되던 것들</div>
+    <ul>
+      <li><b>상태 관리</b> — 필터 form 상태 / 적용된 필터 / 로딩 / 페이지·perPage / 정렬 필드·방향을 매번 <code>useState</code>로 새로 선언</li>
+      <li><b>데이터 조회</b> — <code>ApiClient.resourceAction</code> 호출, 빈 값 필터링, 응답 매핑, 에러 알림을 페이지마다 다시 작성</li>
+      <li><b>UI 뼈대</b> — 필터 영역·테이블·정렬 헤더·페이지네이션·빈 상태·로딩 스피너를 매번 마크업</li>
+      <li><b>부가 기능</b> — 엑셀 다운로드(blob/비동기), 요약 박스, 동적 셀렉트 옵션 로딩을 그때그때 임시 구현</li>
+    </ul>
+    <div class="callout"><b>UX 개선이나 버그 수정이 한 곳에 모이지 못하고</b> 페이지 수만큼 흩어졌습니다. "필터 Enter 키 검색" "정렬 토글" "모달 안에서 셀렉트 드롭다운이 가려지는 z-index 문제" 같은 디테일이 페이지마다 제각각이거나 누락됐습니다.</div>
+  </div>
+
+  <!-- DESIGN -->
+  <h2>② 설계 — 선언형 config + 상태/표현 분리 + 확장 포인트</h2>
+  <p class="sec-lead">원칙은 <b>표준화와 확장성의 균형</b>이었습니다. 표준 페이지는 설정만으로 구성되고 비표준 요구사항도 <b>빌더를 버리지 않고</b> 수용할 수 있어야 했습니다.</p>
+
+  <div class="arch">
+    <div class="arch-inner">
+      <div class="flow">
+        <div class="stack">
+          <div class="node cfg"><div class="nt">ListPageConfig</div><div class="ns">선언형 설정 객체</div></div>
+          <div class="node cfg"><div class="nt">cellRenderers</div><div class="ns">badge·number·date·link…</div></div>
+        </div>
+        <div class="arrow"><span class="al">props로 주입</span><span class="ab">→</span></div>
+        <div class="stack">
+          <div class="node view"><div class="nt">ListPageBuilder</div><div class="ns">레이아웃 조립 + 슬롯</div></div>
+        </div>
+        <div class="arrow"><span class="al">상태 위임</span><span class="ab">→</span></div>
+        <div class="stack">
+          <div class="node hook"><div class="nt">useListPage 훅</div><div class="ns">상태·조회·정렬·엑셀</div></div>
+        </div>
+        <div class="arrow"><span class="al">API</span><span class="ab">→</span></div>
+        <div class="stack">
+          <div class="node"><div class="nt">AdminJS</div><div class="ns">ApiClient</div></div>
+        </div>
+      </div>
+      <div style="text-align:center;color:var(--dim);font-size:.78rem;margin-top:18px">
+        FilterRenderer · TableRenderer · PaginationBar · SummaryBox 가 ListPageBuilder 아래에서 표현을 담당한다. 상태 관리와 조회 로직은 useListPage 훅으로 공통화했다.
+      </div>
+    </div>
+  </div>
+
+  <div class="phase p1" style="margin-top:22px">
+    <div class="ph-num">Decision · 분리</div>
+    <div class="ph-title">상태 관리는 훅으로, 표현은 렌더러로</div>
+    <div class="block">
+      <span class="lbl act">▸ 설계</span>
+      <ul>
+        <li>리스트 페이지에서 반복되던 상태 관리와 조회 로직(필터·정렬·페이지네이션·엑셀)을 <code>useListPage</code> 훅으로 공통화했습니다.</li>
+        <li><code>ListPageBuilder</code>는 훅이 돌려준 상태를 받아 렌더러를 조립하는 <b>표현 계층</b>만 담당합니다.</li>
+        <li>UI를 새로 그려야 하는 화면은 <code>useListPage</code> 훅만 가져다 써도 상태 관리가 재사용됩니다.</li>
+      </ul>
+    </div>
+    <div class="tags"><span class="tag">상태 관리·표현 계층 분리</span><span class="tag">관심사 분리(SoC)</span><span class="tag">재사용성</span></div>
+  </div>
+
+  <!-- BEFORE / AFTER -->
+  <h2>③ Before / After</h2>
+  <p class="sec-lead">쿠폰 관리 페이지는 필터·뱃지/링크 컬럼·정렬·페이지네이션을 갖춘 리스트입니다. 빌더 도입 후 페이지 코드는 <b>대부분 선언형 config</b>로 정리됐습니다.</p>
+  <div class="codewrap">
+    <div class="codecard before">
+      <div class="ct">● Before — 페이지마다 직접</div>
+<pre><span class="c">// 페이지마다 반복되던 뼈대 (요약)</span>
+<span class="k">const</span> [filters, setFilters] = useState({...});
+<span class="k">const</span> [items, setItems]     = useState([]);
+<span class="k">const</span> [total, setTotal]     = useState(0);
+<span class="k">const</span> [page, setPage]       = useState(1);
+<span class="k">const</span> [sort, setSort]       = useState(...);
+<span class="k">const</span> [loading, setLoading] = useState(false);
+
+useEffect(() =&gt; {
+  setLoading(<span class="k">true</span>);
+  api.<span class="f">resourceAction</span>({ actionName, params })
+     .then(...)            <span class="c">// 응답 매핑</span>
+     .catch(...)           <span class="c">// 에러 알림</span>
+     .finally(...);        <span class="c">// 로딩 해제</span>
+}, [filters, page, sort]);
+
+<span class="c">// + 필터 JSX + 테이블 JSX</span>
+<span class="c">// + 정렬 헤더 + 페이지네이션</span>
+<span class="c">// + 엑셀 + 빈 상태 + 로딩…</span>
+<span class="c">// → 페이지마다 수백 줄 중복</span></pre>
+    </div>
+    <div class="codecard after">
+      <div class="ct">● After — 선언형 config</div>
+<pre><span class="k">const</span> config: ListPageConfig = {
+  actionName: <span class="s">'getCoupons'</span>,
+  filterRows: [
+    [{ key: <span class="s">'id'</span>,   type: <span class="s">'text'</span>,   label: <span class="s">'ID'</span> },
+     { key: <span class="s">'name'</span>, type: <span class="s">'text'</span>,   label: <span class="s">'Name'</span> }],
+    [{ key: <span class="s">'type'</span>, type: <span class="s">'select'</span>, label: <span class="s">'Type'</span>,
+       options: TYPE_OPTIONS, isClearable: <span class="k">true</span> }],
+  ],
+  columns: [
+    { key: <span class="s">'id'</span>,        header: <span class="s">'ID'</span>,
+      render: <span class="f">adminLinkCell</span>(<span class="s">'CouponEntity'</span>) },
+    { key: <span class="s">'discount'</span>,  header: <span class="s">'할인'</span>, align: <span class="s">'right'</span>,
+      render: <span class="f">numberCell</span>(<span class="s">'원'</span>) },
+    { key: <span class="s">'createdAt'</span>, header: <span class="s">'생성일'</span>,
+      render: <span class="f">dateCell</span>() },
+  ],
+  pagination: { defaultPerPage: <span class="s">20</span> },
+};
+
+<span class="k">return</span> &lt;<span class="f">ListPageBuilder</span> config={config} props={props} /&gt;;</pre>
+    </div>
+  </div>
+
+  <p class="sec-lead" style="margin-top:26px">컬럼의 <code>render</code>에 들어가는 셀 렌더러도 함수로 떼어내 재사용합니다. 표시 로직(숫자 포맷·날짜 변환·뱃지·링크)을 한 줄로 선언합니다.</p>
+  <div class="codecard">
+    <div class="ct" style="color:var(--purple)">● cellRenderers — 표시 로직도 재사용</div>
+<pre><span class="c">// 숫자 천단위 + 접미사</span>
+<span class="k">export const</span> <span class="f">numberCell</span> = (suffix?: <span class="k">string</span>): CellRenderer =&gt;
+  (value) =&gt; value == <span class="k">null</span>
+    ? <span class="s">'-'</span>
+    : <span class="s">`</span>${Number(value).<span class="f">toLocaleString</span>(<span class="s">'ko-KR'</span>)}${suffix ?? <span class="s">''</span>}<span class="s">`</span>;
+
+<span class="c">// 코드 → 뱃지 (variant 매핑)</span>
+<span class="k">export const</span> <span class="f">badgeCell</span> = (map: Record&lt;<span class="k">string</span>, {label; variant}&gt;): CellRenderer =&gt;
+  (value) =&gt; {
+    <span class="k">const</span> c = map[<span class="f">String</span>(value)];
+    <span class="k">return</span> c ? &lt;<span class="f">Badge</span> variant={c.variant}&gt;{c.label}&lt;/<span class="f">Badge</span>&gt; : &lt;&gt;-&lt;/&gt;;
+  };
+
+<span class="c">// 사용처 — config.columns 안에서</span>
+{ key: <span class="s">'discount'</span>, header: <span class="s">'할인'</span>, render: <span class="f">numberCell</span>(<span class="s">'원'</span>) }
+{ key: <span class="s">'status'</span>,   header: <span class="s">'상태'</span>,
+  render: <span class="f">badgeCell</span>({ active: { label: <span class="s">'활성'</span>, variant: <span class="s">'success'</span> } }) }</pre>
+  </div>
+
+  <!-- DETAILS -->
+  <h2>④ 확장 포인트 — 비표준 요구사항을 흡수하는 구조</h2>
+  <p class="sec-lead">공통화의 가장 큰 위험은 예외가 생기면 통째로 갈아엎어야 하는 경직성입니다. 비표준 요구사항을 빌더 안에서 흡수하도록 단계적 확장 포인트를 뒀습니다.</p>
+
+  <div class="phase p1">
+    <div class="ph-num">Contract</div>
+    <div class="ph-title">페이지마다 다른 API 계약을 빌더 외부에서 흡수</div>
+    <p style="color:var(--mut);margin:2px 0 12px">가장 신경 쓴 설계 지점입니다. 리스트 페이지를 공통화하려 해도 <b>API 응답 구조와 정렬 파라미터명이 페이지마다 달랐습니다.</b> 이를 빌더 코드에 분기로 넣지 않고 <b>설정으로 외부화</b>해, 서버 계약 차이가 빌더 내부로 새어 들어오지 않게 했습니다.</p>
+    <ul>
+      <li><b>응답 구조 매핑</b> — <code>responseMapping</code>으로 목록/총건수가 담긴 키(<code>data.items</code>, <code>data.list</code> 등)를 페이지별로 지정</li>
+      <li><b>정렬 파라미터 매핑</b> — 서버마다 다른 정렬 키(<code>sortField/sortOrder</code> vs <code>orderBy/direction</code>)를 <code>sortParamMapping</code>으로 흡수</li>
+      <li><b>파라미터 빌더</b> — 표준 변환으로 안 되는 동적 필터 키 변환은 <code>buildParams</code> 콜백에 위임</li>
+    </ul>
+    <div class="codecard" style="margin-top:14px">
+      <div class="ct" style="color:var(--purple)">● 같은 빌더, 다른 서버 계약</div>
+<pre><span class="c">// 응답 { data: { list: [...], count: 120 } }, 정렬 키 orderBy/direction</span>
+<span class="k">const</span> config: ListPageConfig = {
+  actionName: <span class="s">'getPods'</span>,
+  responseMapping: { items: <span class="s">'list'</span>, total: <span class="s">'count'</span> },
+  sortParamMapping: { field: <span class="s">'orderBy'</span>, order: <span class="s">'direction'</span> },
+  buildParams: (v) =&gt; ({ ...v, publisherId: v.publisher?.id }),
+  columns: [ <span class="c">/* ... */</span> ],
+};</pre>
+    </div>
+    <div class="tags"><span class="tag">API 계약</span><span class="tag">설정 외부화</span><span class="tag">표준화</span></div>
+  </div>
+
+  <div class="phase p2">
+    <div class="ph-num">Extension Points</div>
+    <div class="ph-title">비표준 요구사항을 흡수하는 방법</div>
+    <ul>
+      <li><b>슬롯(slots)</b> — <code>beforeFilters · afterFilters · beforeTable · afterTable</code>에 임의의 노드를 끼워 탭바·배너·일괄작업 버튼 같은 비표준 영역을 삽입</li>
+      <li><b>훅 단독 사용</b> — 레이아웃을 새로 그려야 하면 <code>useListPage</code>만 가져다 상태를 위임하고 UI는 직접 작성</li>
+      <li><b>즉시 적용 필터</b> — 탭 클릭처럼 검색 버튼 없이 바로 반영해야 하는 경우 <code>immediate</code> 플래그와 <code>applyFilter</code>로 처리</li>
+      <li><b>외부 리프레시 트리거</b> — <code>refreshKey</code>를 바꾸면 필터·정렬·페이지 상태는 유지한 채 목록만 다시 조회</li>
+    </ul>
+    <div class="tags"><span class="tag">슬롯 패턴</span><span class="tag">점진적 복잡도 수용</span><span class="tag">확장성</span></div>
+  </div>
+
+  <div class="codewrap">
+    <div class="codecard">
+      <div class="ct" style="color:var(--green)">● 슬롯 — 표준 레이아웃은 두고 비표준 영역만 삽입</div>
+<pre>&lt;<span class="f">ListPageBuilder</span>
+  config={config}
+  props={props}
+  <span class="c">// 필터 위에 탭바, 테이블 위에 일괄작업 버튼</span>
+  beforeFilters={&lt;<span class="f">StatusTabs</span> onChange={onTab} /&gt;}
+  beforeTable={&lt;<span class="f">BulkActionBar</span> ids={selected} /&gt;}
+/&gt;;</pre>
+    </div>
+    <div class="codecard">
+      <div class="ct" style="color:var(--accent)">● 훅 단독 — 레이아웃은 직접 그리고 상태만 위임</div>
+<pre><span class="c">// 빌더를 안 쓰는 화면도 상태 로직은 재사용</span>
+<span class="k">const</span> {
+  items, total, isLoading,
+  formValues, setFormValue, handleSearch,
+  sortField, handleSort,
+  page, handlePageChange,
+} = <span class="f">useListPage</span>(config, props);
+
+<span class="k">return</span> &lt;<span class="f">MyCustomLayout</span> items={items} ... /&gt;;</pre>
+    </div>
+  </div>
+
+  <div class="phase p3">
+    <div class="ph-num">Details</div>
+    <div class="ph-title">공통 레이어에서 한 번만 해결한 디테일</div>
+    <ul>
+      <li><b>모달 안 드롭다운 z-index</b> — AdminJS Modal Wrapper가 <code>position:fixed</code> + z-index level 0이라 셀렉트 메뉴와 sticky 헤더가 dim에 가려지는 문제. 메뉴를 <code>menuPortal</code>로 body에 띄우고 컨테이너 z-index를 0으로 묶어 해결하고 원인을 주석으로 명시</li>
+      <li><b>엑셀 두 가지 모드</b> — 즉시 다운로드(<code>blob</code>: Content-Disposition 파일명 파싱·디코딩 포함)와 대용량 비동기 요청(<code>async</code>: 접수 알림)을 같은 설정으로 분기</li>
+      <li><b>요약 API 실패 격리</b> — 요약 조회는 목록 조회와 독립적이므로 실패해도 메인 조회 흐름을 차단하지 않도록 분리</li>
+      <li><b>동적 옵션 주입</b> — 출판사 목록처럼 비동기로 받아오는 셀렉트 옵션을 <code>optionsKey</code>↔<code>dynamicOptions</code>로 연결</li>
+      <li><b>reset과 default 분리</b> — URL에서 시드된 기본값과 사용자가 기대하는 초기화 상태가 다를 수 있어 <code>resetValue</code>를 별도로 둠</li>
+      <li><b>셀 렌더러 라이브러리</b> — <code>badgeCell · numberCell · dateCell · linkCell · adminLinkCell · mapCell</code>로 표시 로직까지 재사용(중첩 키 <code>params.name</code> 접근 지원)</li>
+    </ul>
+  </div>
+
+  <div class="codecard">
+    <div class="ct" style="color:var(--amber)">● 모달 안 드롭다운 z-index — 원인을 주석으로 남긴 한 번의 해결</div>
+<pre><span class="c">// AdminJS Modal의 Wrapper는 position:fixed + z-index:auto(level 0)라</span>
+<span class="c">// dim/카드가 그 안에 갇힌다. 필터가 양수 z-index로 body 루트에서</span>
+<span class="c">// 탈출하면 dim을 뚫고 위로 올라오므로 0으로 둔다.</span>
+&lt;<span class="f">Box</span> style={{ position: <span class="s">'relative'</span>, zIndex: <span class="s">0</span> }}&gt;
+  &lt;<span class="f">Select</span>
+    menuPortalTarget={document.body}   <span class="c">// 메뉴를 body로 포탈</span>
+    menuPosition=<span class="s">"fixed"</span>
+    styles={{ menuPortal: (b) =&gt; ({ ...b, zIndex: <span class="s">9999</span> }) }}
+  /&gt;
+&lt;/<span class="f">Box</span>&gt;</pre>
+  </div>
+
+  <!-- IMPACT -->
+  <h2>⑤ 효과</h2>
+  <div class="stats">
+    <div class="stat p"><div class="num">10+</div><div class="cap">이 빌더를 쓰는 관리자 페이지<br>(주문·쿠폰·멤버십·POD·정산…)</div></div>
+    <div class="stat g"><div class="num">8종</div><div class="cap">필터 타입<br>(text·select·multiSelect·date·month·dateRange·radio·custom)</div></div>
+    <div class="stat m"><div class="num">6종</div><div class="cap">재사용 셀 렌더러<br>(badge·number·date·link·adminLink·map)</div></div>
+  </div>
+  <ul class="hi" style="margin-top:18px">
+    <li><b>공통 동작의 중앙화</b> — 정렬 토글·Enter 검색·로딩/빈 상태·모달 z-index 같은 공통 UX를 빌더에서 한 번 고치면 모든 페이지에 반영됩니다.</li>
+    <li><b>신규 개발·유지보수 비용 감소</b> — 대부분의 표준 리스트 페이지는 상태 관리와 조회 로직을 새로 작성하지 않고 config 중심으로 구현할 수 있게 됐습니다.</li>
+    <li><b>일관된 운영 경험</b> — 페이지마다 제각각이던 필터·정렬·페이지네이션 동작이 동일해졌습니다.</li>
+  </ul>
+
+  <!-- RETRO -->
+  <h2>⑥ 회고</h2>
+  <div class="phase">
+    <ul>
+      <li><b>공통화의 성패는 확장성 설계에 달려 있다.</b> 슬롯과 훅 단독 사용이라는 확장 포인트가 없었다면 비표준 페이지 한두 개 때문에 빌더를 쓰지 않았을 것입니다.</li>
+      <li><b>상태와 표현을 분리하면 재사용 단위가 커진다.</b> <code>useListPage</code>를 훅으로 떼어낸 덕분에 표준 레이아웃이 안 맞는 화면도 상태 관리는 재사용할 수 있었습니다.</li>
+      <li><b>반복되는 문제는 공통 레이어에서 해결한다.</b> 모달 z-index나 엑셀 파일명 디코딩처럼 페이지마다 반복되던 문제를 공통 레이어에서 원인까지 풀고 주석으로 남겼습니다.</li>
+    </ul>
+  </div>
+
+  <footer>
+    고은지 (Elin) · 백엔드 엔지니어 · <a href="../index.html">메인 포트폴리오</a><br>
+    회사 식별 정보와 사업 지표는 제거하고 기술적 의사결정만 일반화해 정리했습니다. 채택 페이지 수는 코드베이스 기준 실측값이며, 정량 수치를 측정하지 않은 항목은 본문에서 정성적으로 기술했습니다.
+  </footer>
+</div>
+</body>
+</html>

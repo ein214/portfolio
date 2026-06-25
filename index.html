@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>고은지 (Elin) — 백엔드 엔지니어 포트폴리오</title>
+<meta name="description" content="Node.js·NestJS 기반 백엔드 14년차. 정산·결제 도메인, 천만 건 규모 CQRS 아키텍처, 네이티브 메모리·큐 병목 같은 장애 분석 사례를 정리한 포트폴리오입니다.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="고은지 (Elin) — 백엔드 엔지니어 포트폴리오">
+<meta property="og:description" content="정산·결제 도메인과 대용량 아키텍처, 장애 분석 깊이를 정리한 백엔드 14년차 포트폴리오.">
+<meta property="og:url" content="https://ein214.github.io/portfolio/">
 <style>
   :root{
     --ink:#11161d; --ink2:#3a4654; --mut:#6b7785; --line:#e6e9ee;
@@ -51,6 +56,10 @@
   .kv dd b{color:var(--ink)}
   .fileref{font-size:12.5px;color:var(--mut);margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
   .fileref code{background:#f4f6f9}
+  .more{margin:14px 0 0;font-size:14px;font-weight:600}
+  .herolinks{margin-top:18px;font-size:14px;color:var(--mut)}
+  .herolinks a{font-weight:600}
+  footer a{color:var(--accent);font-weight:600}
 
   ul.clean{margin:10px 0 0;padding-left:0;list-style:none}
   ul.clean li{position:relative;padding-left:22px;margin:7px 0;color:var(--ink2)}
@@ -112,6 +121,7 @@
     <span class="pill">🎯 <b>주력</b> 정산/결제 도메인 · 대용량 아키텍처 · 장애 분석</span>
     <span class="pill">🧭 <b>지향</b> 근본 원인 분석 · 운영 안정화</span>
   </div>
+  <p class="herolinks"><a href="https://github.com/ein214">GitHub</a> · <a href="https://github.com/ein214/portfolio">전체 기록·트러블슈팅 원문 (저장소)</a></p>
 </header>
 
 <!-- WHO -->
@@ -163,6 +173,7 @@
       <dd>주문(Order) → 정산 기초 데이터(Basic) → 정산(Settlement)으로 단계를 분리하고 정산 오류를 에러 코드로 구조화해 운영자가 백오피스에서 직접 보정하되 <b>원본은 수정하지 않는</b> 자가복구 구조를 만들었습니다.</dd>
     </dl>
     <div class="verdict">수기 작업을 시스템으로 전환했고, 이후 데이터가 천만 건대로 성장하는 동안의 정산 기반이 됐습니다. 이 설계가 뒤의 조회 최적화(②)와 분산 정산 아키텍처로 이어집니다.</div>
+    <p class="more"><a href="https://github.com/ein214/portfolio/blob/main/troubleshooting/settlement-system-zero-to-one.md">전체 분석 읽기 →</a></p>
   </div>
 
   <!-- 2 -->
@@ -180,6 +191,7 @@
       <dd>문제를 쿼리 레벨에서 <b>데이터 모델 레벨로 옮겼습니다</b>. 필요한 컬럼을 모두 비정규화한 조회 전용 Flat Table(조인 0), 읽기/쓰기 DB 물리 분리, 메시지 큐 기반 동기화(생성·확정 이벤트 → Flat Table upsert)로 읽기 경로를 분리했습니다(CQRS).</dd>
     </dl>
     <div class="verdict">읽기 경로를 조회 전용 모델로 분리해 대량 데이터에서도 안정적으로 조회할 수 있는 구조로 전환했습니다. 1·2차 시도로 문제의 본질이 인덱스나 파티셔닝이 아니라 데이터 모델과 조인 복잡도에 있음을 확인했고 해결 레이어를 쿼리에서 데이터 모델로 옮겼습니다.</div>
+    <p class="more"><a href="https://github.com/ein214/portfolio/blob/main/troubleshooting/settlement-query-optimization.md">전체 분석 읽기 →</a></p>
   </div>
 
   <!-- 3 -->
@@ -200,6 +212,7 @@
       <li>대기 시간과 처리 시간을 분리 로깅, 오토스케일링 지표를 CPU 기준으로 교체(scale-up 민감·scale-down 보수)</li>
     </ul>
     <div class="verdict">처리 병목을 해소하고 stalled 중복 실행, 배포 중 작업 유실, 오토스케일링 오작동까지 함께 정비했습니다.</div>
+    <p class="more"><a href="https://github.com/ein214/portfolio/blob/main/troubleshooting/bull-queue-bottleneck.md">전체 분석 읽기 →</a></p>
   </div>
 
   <!-- 4 -->
@@ -221,14 +234,21 @@
       <dd>Rust/skia 기반 <code>@napi-rs/canvas</code>로 교체(API 호환·prebuilt). 메모리 사용률을 약 40%에서 7% 수준으로 낮추고 이후 수평을 유지했으며, 처리량이 늘어난 피크 구간에서도 누수 패턴이 사라졌습니다. 검증 기준은 배포 직후가 아니라 피크를 통과한 뒤로 잡았습니다.</dd>
     </dl>
     <div class="verdict">가설을 세우고 데이터로 원인을 좁혀가며 문제를 추적했고 라이브러리 교체 후 피크 구간까지 포함한 장기 관찰로 해결을 검증했습니다.</div>
+    <p class="more"><a href="https://github.com/ein214/portfolio/blob/main/troubleshooting/redis-job-memory-leak.md">전체 분석 읽기 →</a></p>
   </div>
 </section>
 
 <!-- DEEP DIVE POINTER -->
 <section>
-  <div class="deep">
+  <h2>Deep Dive</h2>
+  <div class="h2sub">기술 심화 문서</div>
+  <div class="deep" style="margin-bottom:16px">
     <h3>정산 시스템 Deep Dive</h3>
     <p>payout 레거시 진단, settlement_prep 2단계 파이프라인, Strategy/Template, CQRS, SQS FIFO 멱등성, advisory lock, 데이터 모델링까지 — 정산 도메인의 설계 배경과 의사결정을 깊이 있게 다룬 기술 심화 문서입니다. <a href="settlement.html">→ 정산 시스템 Deep Dive 보기</a></p>
+  </div>
+  <div class="deep">
+    <h3>ListBuilder — AdminJS 리스트 페이지 빌더</h3>
+    <p>리스트 페이지마다 반복되던 조회·필터·정렬·페이지네이션·엑셀 로직을 설정 객체 하나로 선언하는 재사용 빌더로 공통화했습니다. 로직(useListPage 훅)과 표현(렌더러) 분리, 슬롯·훅 단독 사용이라는 탈출구 설계, 모달 z-index 같은 디테일까지 — 10개 이상의 관리자 페이지가 채택한 백오피스 공통화 사례입니다. <a href="listbuilder/index.html">→ ListBuilder Deep Dive 보기</a></p>
   </div>
 </section>
 
@@ -245,6 +265,7 @@
 </section>
 
 <footer>
+  <a href="https://github.com/ein214">GitHub</a> · <a href="https://github.com/ein214/portfolio">저장소 (전체 기록)</a> · <a href="settlement.html">정산 Deep Dive</a> · <a href="listbuilder/index.html">ListBuilder</a><br>
   고은지 (Elin) · 백엔드 엔지니어 · Node.js / NestJS / PostgreSQL / AWS<br>
   회사 식별 정보와 사업 지표는 제거하고 기술적 의사결정만 일반화해 정리했습니다. 측정하지 않은 이론값은 "(이론)"으로 표기했습니다.
 </footer>

@@ -1,21 +1,40 @@
 # Portfolio
 
-🌐 **[라이브 사이트](https://ein214.github.io/portfolio/)** · 🧩 **[정산 시스템 Deep Dive](https://ein214.github.io/portfolio/settlement.html)** · 👤 **[전체 프로필](https://github.com/ein214)**
+🌐 **[라이브 사이트](https://ein214.github.io/portfolio/)** · 👤 **[전체 프로필](https://github.com/ein214)**
+
+백엔드 작업 기록을 도메인별로 정리했습니다.
 
 ---
 
-## 읽는 순서
+## 정산 시스템
 
-정산 시스템을 0부터 세운 **설계 기록(1)** 에서 출발해, 그 시스템이 천만 건 규모로 성장하며 부딪힌 **문제 해결(2~4)** 로 이어집니다.
+수기 엑셀 정산을 시스템으로 옮긴 0→1 설계(1)와 데이터가 천만 건대로 쌓인 뒤 드러난 조회 성능 문제(2)를 다룹니다.
 
 | # | 글 | 한 줄 요약 | 키워드 |
 |---|---|---|---|
-| 1 | **[정산 플랫폼 0→1 설계](./troubleshooting/settlement-system-zero-to-one.md)** | 100% 수동 엑셀 정산을 시스템으로. 1:N 저작권 분배·일할 정산이 핵심 난제 | 도메인 모델링 · 1:N 정산 알고리즘 · 운영 자립화 |
-| 2 | **[천만 건 조회 개선](./troubleshooting/settlement-query-optimization.md)** | 인덱스도 파티셔닝도 안 듣던 이유. 결국 읽기 모델을 분리(CQRS) | PostgreSQL 실행계획 · 파티셔닝 효과 범위 · CQRS·비정규화 |
-| 3 | **[Bull Queue 워터마크 장애](./troubleshooting/bull-queue-bottleneck.md)** | 처리 능력은 멀쩡한데 31분 대기. "느린 작업"과 "밀린 큐"는 다르다 | 멱등성 설계 · Graceful Shutdown · 멀티 인스턴스 분산 락 |
-| 4 | **[RSS 메모리 누수 4일 추적](./troubleshooting/redis-job-memory-leak.md)** | heap은 정상인데 RSS만 우상향. 네이티브 라이브러리의 메모리 미반납 | Native Memory 추적 · V8 GC와 RSS · glibc malloc arena |
+| 1 | **[정산 플랫폼 0→1 설계](./troubleshooting/settlement-system-zero-to-one.md)** | 수기 엑셀 정산을 시스템으로. 1:N 저작권 분배와 이용권 일할 정산이 핵심 난제 | 도메인 모델링 · 1:N 수익 분배 · 운영 자립화 |
+| 2 | **[천만 건 조회 개선](./troubleshooting/settlement-query-optimization.md)** | 인덱스도 파티셔닝도 통하지 않은 이유. 읽기 모델을 분리(CQRS) | PostgreSQL 실행계획 · 파티셔닝 효과 범위 · CQRS · 비정규화 |
 
-> 1번 글의 설계 배경·아키텍처 다이어그램은 **[정산 시스템 Deep Dive](https://ein214.github.io/portfolio/settlement.html)** 에 더 자세히 정리돼 있습니다.
+> 설계 배경과 아키텍처 다이어그램은 **[정산 시스템 Deep Dive](https://ein214.github.io/portfolio/settlement.html)** 에 정리돼 있습니다.
+
+---
+
+## 백그라운드 큐·워커 (Bull · Redis)
+
+파일 다운로드 워터마크를 처리하는 백그라운드 워커에서 겪은 두 건의 장애 기록입니다.
+
+| # | 글 | 한 줄 요약 | 키워드 |
+|---|---|---|---|
+| 3 | **[Bull Queue 워터마크 병목](./troubleshooting/bull-queue-bottleneck.md)** | 개별 작업은 1~5초인데 대기는 31분. 처리 속도가 아니라 처리 용량이 원인 | concurrency 설계 · 멱등성 · Graceful Shutdown · 경량 분산 락 |
+| 4 | **[RSS 메모리 누수 추적](./troubleshooting/redis-job-memory-leak.md)** | heap은 정상인데 RSS만 우상향. 네이티브 라이브러리가 메모리를 반환하지 않은 문제 | 네이티브 메모리 · V8 GC와 RSS · glibc malloc arena |
+
+---
+
+## 백오피스 공통화
+
+| 글 | 한 줄 요약 | 키워드 |
+|---|---|---|
+| **[ListBuilder — AdminJS 리스트 페이지 빌더](https://ein214.github.io/portfolio/listbuilder/)** | 리스트 페이지마다 반복되던 조회·필터·정렬·엑셀 로직을 설정 객체로 선언하는 재사용 빌더로 공통화. 관리자 페이지 10여 곳에 적용 | 선언형 config · 로직/표현 분리 · 확장 포인트 |
 
 ---
 
